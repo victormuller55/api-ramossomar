@@ -78,6 +78,7 @@ public final class MapperUtil {
 		response.setId(publicacao.getId());
 		response.setId_autor(publicacao.getAutor().getId());
 		response.setNome_autor(publicacao.getAutor().getNome());
+		response.setImagem_autor(publicacao.getAutor().getImagem());
 		response.setTitulo(publicacao.getTitulo());
 		response.setConteudo(publicacao.getConteudo());
 		response.setImagens(publicacao.obterImagens());

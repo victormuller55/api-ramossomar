@@ -12,6 +12,7 @@ public class PublicacaoResponse {
 	private UUID id;
 	private UUID id_autor;
 	private String nome_autor;
+	private String imagem_autor;
 	private String titulo;
 	private String conteudo;
 	private List<String> imagens = new ArrayList<>();
@@ -40,6 +41,14 @@ public class PublicacaoResponse {
 
 	public void setNome_autor(String nome_autor) {
 		this.nome_autor = nome_autor;
+	}
+
+	public String getImagem_autor() {
+		return imagem_autor;
+	}
+
+	public void setImagem_autor(String imagem_autor) {
+		this.imagem_autor = imagem_autor;
 	}
 
 	public String getTitulo() {
