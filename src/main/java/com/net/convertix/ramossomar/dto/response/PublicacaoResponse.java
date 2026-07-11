@@ -1,8 +1,9 @@
 package com.net.convertix.ramossomar.dto.response;
 
-import com.net.convertix.ramossomar.model.enums.TipoMidia;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Schema(description = "Dados de resposta da publicação")
@@ -13,8 +14,7 @@ public class PublicacaoResponse {
 	private String nome_autor;
 	private String titulo;
 	private String conteudo;
-	private String midia;
-	private TipoMidia tipo_midia;
+	private List<String> imagens = new ArrayList<>();
 	private LocalDateTime data_criacao;
 	private LocalDateTime data_atualizacao;
 
@@ -58,20 +58,12 @@ public class PublicacaoResponse {
 		this.conteudo = conteudo;
 	}
 
-	public String getMidia() {
-		return midia;
+	public List<String> getImagens() {
+		return imagens;
 	}
 
-	public void setMidia(String midia) {
-		this.midia = midia;
-	}
-
-	public TipoMidia getTipo_midia() {
-		return tipo_midia;
-	}
-
-	public void setTipo_midia(TipoMidia tipo_midia) {
-		this.tipo_midia = tipo_midia;
+	public void setImagens(List<String> imagens) {
+		this.imagens = imagens;
 	}
 
 	public LocalDateTime getData_criacao() {

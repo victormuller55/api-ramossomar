@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,10 +26,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/ramossomar/publicacoes")
-@Tag(name = "Publicações", description = "CRUD de publicações com mídia")
+@Tag(name = "Publicações", description = "CRUD de publicações com até 3 imagens salvas no servidor")
 @SecurityRequirement(name = "bearer-jwt")
 public class PublicacaoController {
 
@@ -39,7 +41,7 @@ public class PublicacaoController {
 	}
 
 	@PostMapping("/novo")
-	@Operation(summary = "Criar publicação", description = "Cadastra uma nova publicação com imagem ou vídeo.")
+	@Operation(summary = "Criar publicação", description = "Cadastra uma nova publicação. As imagens (1 a 3) são enviadas depois via upload-imagens.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "Publicação criada",
 					content = @Content(schema = @Schema(implementation = PublicacaoResponse.class))),
@@ -73,7 +75,7 @@ public class PublicacaoController {
 	}
 
 	@PutMapping("/alterar-dados")
-	@Operation(summary = "Alterar publicação", description = "Atualiza os dados de uma publicação existente.")
+	@Operation(summary = "Alterar publicação", description = "Atualiza título e conteúdo. Imagens são gerenciadas via upload-imagens.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Publicação atualizada",
 					content = @Content(schema = @Schema(implementation = PublicacaoResponse.class))),
@@ -88,8 +90,30 @@ public class PublicacaoController {
 		return ResponseEntity.ok(publicacaoService.alterar(request));
 	}
 
+	@PostMapping(value = "/upload-imagens", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Operation(
+			summary = "Upload de imagens da publicação",
+			description = "Envia de 1 a 3 arquivos de imagem (JPG, PNG, WEBP ou GIF). Substitui as imagens anteriores da publicação."
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Imagens atualizadas",
+					content = @Content(schema = @Schema(implementation = PublicacaoResponse.class))),
+			@ApiResponse(responseCode = "400", description = "Arquivos inválidos",
+					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+			@ApiResponse(responseCode = "404", description = "Publicação não encontrada",
+					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Erro interno",
+					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+	})
+	public ResponseEntity<PublicacaoResponse> uploadImagens(
+			@RequestParam UUID id,
+			@RequestParam("imagens") List<MultipartFile> imagens
+	) {
+		return ResponseEntity.ok(publicacaoService.uploadImagens(id, imagens));
+	}
+
 	@DeleteMapping("/apagar")
-	@Operation(summary = "Apagar publicação", description = "Remove fisicamente uma publicação.")
+	@Operation(summary = "Apagar publicação", description = "Remove fisicamente a publicação e as imagens do servidor.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "204", description = "Publicação removida"),
 			@ApiResponse(responseCode = "400", description = "Requisição inválida",

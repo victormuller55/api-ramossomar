@@ -1,13 +1,12 @@
 package com.net.convertix.ramossomar.dto.request;
 
-import com.net.convertix.ramossomar.model.enums.TipoMidia;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
-@Schema(description = "Dados para criação de publicação")
+@Schema(description = "Dados para criação de publicação (imagens via upload separado)")
 public class PublicacaoRequest {
 
 	@NotNull(message = "O id do autor é obrigatório")
@@ -22,13 +21,6 @@ public class PublicacaoRequest {
 	@NotBlank(message = "O conteúdo é obrigatório")
 	@Schema(description = "Conteúdo da publicação")
 	private String conteudo;
-
-	@Size(max = 500, message = "A mídia deve ter no máximo 500 caracteres")
-	@Schema(description = "Caminho ou URL da mídia", example = "/uploads/publicacoes/foto.jpg")
-	private String midia;
-
-	@Schema(description = "Tipo da mídia", example = "IMAGEM")
-	private TipoMidia tipo_midia;
 
 	public UUID getId_autor() {
 		return id_autor;
@@ -52,21 +44,5 @@ public class PublicacaoRequest {
 
 	public void setConteudo(String conteudo) {
 		this.conteudo = conteudo;
-	}
-
-	public String getMidia() {
-		return midia;
-	}
-
-	public void setMidia(String midia) {
-		this.midia = midia;
-	}
-
-	public TipoMidia getTipo_midia() {
-		return tipo_midia;
-	}
-
-	public void setTipo_midia(TipoMidia tipo_midia) {
-		this.tipo_midia = tipo_midia;
 	}
 }

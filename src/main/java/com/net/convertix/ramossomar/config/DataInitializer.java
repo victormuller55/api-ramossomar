@@ -3,19 +3,24 @@ package com.net.convertix.ramossomar.config;
 import com.net.convertix.ramossomar.model.Usuario;
 import com.net.convertix.ramossomar.model.enums.Perfil;
 import com.net.convertix.ramossomar.repository.UsuarioRepository;
+import com.net.convertix.ramossomar.service.CidadeLocalVotacaoImportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+@EnableConfigurationProperties(ImportacaoProperties.class)
 public class DataInitializer {
 
 	private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
 	@Bean
+	@Order(1)
 	CommandLineRunner inicializarAdmin(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
 		return args -> {
 			if (!usuarioRepository.existsByEmail("admin@ramossomar.com")) {
@@ -28,6 +33,25 @@ public class DataInitializer {
 				admin.setAtivo(true);
 				usuarioRepository.save(admin);
 				log.info("Usuário admin padrão criado: admin@ramossomar.com / admin123");
+			}
+		};
+	}
+
+	@Bean
+	@Order(2)
+	CommandLineRunner inicializarCidadesELocaisVotacao(CidadeLocalVotacaoImportService importService) {
+		return args -> {
+			try {
+				importService.importarCidadesSeNecessario();
+			} catch (Exception ex) {
+				log.error("Falha na importação automática de cidades: {}", ex.getMessage(), ex);
+				return;
+			}
+
+			try {
+				importService.importarLocaisVotacaoSeNecessario();
+			} catch (Exception ex) {
+				log.error("Falha na importação automática de locais de votação: {}", ex.getMessage(), ex);
 			}
 		};
 	}

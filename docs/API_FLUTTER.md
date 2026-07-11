@@ -39,6 +39,11 @@ http://10.0.2.2:8080/api/v1/ramossomar
 - IDs: UUID (`"c22cf335-e634-4f01-8d7a-6a8bdcd9df17"`)
 - Senhas nunca retornam na resposta
 - Apoiadores usam **soft delete** (`data_exclusao`)
+- Locais de votação usam **inativação lógica** (`ativo = false`)
+- Cidades são **somente leitura** (importadas automaticamente)
+- Imagens de perfil e publicações são **arquivos enviados** (multipart), salvos no servidor e **comprimidas automaticamente** (JPEG)
+- Publicações aceitam **somente imagens** (1 a 3), nunca links externos
+- Arquivos estáticos públicos em `/uploads/**`
 
 ### Autenticação JWT
 
@@ -104,13 +109,6 @@ APOIADOR
 CONFIRMADO
 ```
 
-### Tipo de mídia
-
-```text
-IMAGEM
-VIDEO
-```
-
 ---
 
 ## 5. Endpoints
@@ -154,6 +152,7 @@ Response `200`:
 | POST | `/usuarios/novo` | Criar |
 | GET | `/usuarios` | Listar / filtrar |
 | PUT | `/usuarios/alterar-dados` | Atualizar |
+| POST | `/usuarios/upload-imagem?id={uuid}` | Upload da foto de perfil |
 | DELETE | `/usuarios/apagar?id={uuid}` | Inativar |
 
 Filtros GET (query): `nome`, `email`, `perfil`, `ativo`
@@ -167,7 +166,6 @@ Request criar:
   "senha": "senha123",
   "perfil": "LIDER",
   "telefone": "41999999999",
-  "imagem": "/uploads/usuarios/joao.jpg",
   "ativo": true
 }
 ```
@@ -182,12 +180,26 @@ Request alterar (inclui `id`):
   "senha": "novaSenha123",
   "perfil": "LIDER",
   "telefone": "41999999999",
-  "imagem": "/uploads/usuarios/joao.jpg",
   "ativo": true
 }
 ```
 
-> `senha` no PUT é opcional. Se omitida ou vazia, a senha atual é mantida.
+> `senha` no PUT é opcional. Se omitida ou vazia, a senha atual é mantida.  
+> **Não envie URL de imagem** no JSON. Use o upload abaixo.
+
+#### Upload de imagem de perfil
+
+```http
+POST /usuarios/upload-imagem?id={uuid}
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+campo: imagem  (arquivo JPG/PNG/WEBP/GIF)
+```
+
+- A imagem é **comprimida** no servidor e salva como `.jpg`
+- O campo `imagem` na resposta fica assim: `/uploads/usuarios/{uuid}.jpg`
+- URL completa no app: `{host}/uploads/usuarios/{uuid}.jpg` (rota pública, sem token)
 
 ---
 
@@ -254,26 +266,111 @@ Filtros GET: `id_apoiador`, `id_usuario`, `campo_alterado`
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/publicacoes/novo` | Criar |
+| POST | `/publicacoes/novo` | Criar (texto) |
 | GET | `/publicacoes` | Listar |
-| PUT | `/publicacoes/alterar-dados` | Alterar |
+| PUT | `/publicacoes/alterar-dados` | Alterar (texto) |
+| POST | `/publicacoes/upload-imagens?id={uuid}` | Upload de 1 a 3 imagens |
 | DELETE | `/publicacoes/apagar?id={uuid}` | Apagar |
 
 Filtros GET: `titulo`, `id_autor`
 
-Request criar:
+Request criar (somente texto — **sem links de imagem**):
 
 ```json
 {
   "id_autor": "uuid-do-usuario",
   "titulo": "Campanha de rua",
-  "conteudo": "Texto da publicação...",
-  "midia": "/uploads/publicacoes/foto.jpg",
-  "tipo_midia": "IMAGEM"
+  "conteudo": "Texto da publicação..."
 }
 ```
 
-> Se enviar `midia`, envie também `tipo_midia` (e vice-versa).
+Request alterar:
+
+```json
+{
+  "id": "uuid-da-publicacao",
+  "id_autor": "uuid-do-usuario",
+  "titulo": "Campanha de rua",
+  "conteudo": "Texto atualizado..."
+}
+```
+
+#### Upload de imagens da publicação (obrigatório se quiser fotos)
+
+```http
+POST /publicacoes/upload-imagens?id={uuid}
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+campo: imagens  (1 a 3 arquivos — somente imagem)
+```
+
+Regras:
+
+- **Somente imagens** (JPG, PNG, WEBP, GIF) — vídeos e links externos não são aceitos
+- Máximo **3 imagens** por publicação
+- Cada imagem é **comprimida** no servidor (redimensionada até 1920px e salva em JPEG qualidade 0.75)
+- O upload **substitui** as imagens anteriores da publicação
+- Response traz `imagens` como lista de caminhos relativos
+
+Response exemplo:
+
+```json
+{
+  "id": "uuid-da-publicacao",
+  "id_autor": "uuid-do-usuario",
+  "nome_autor": "João Silva",
+  "titulo": "Campanha de rua",
+  "conteudo": "Texto da publicação...",
+  "imagens": [
+    "/uploads/publicacoes/a1.jpg",
+    "/uploads/publicacoes/a2.jpg"
+  ],
+  "data_criacao": "2026-07-11T00:00:00",
+  "data_atualizacao": "2026-07-11T00:05:00"
+}
+```
+
+Fluxo no Flutter:
+
+1. `POST /publicacoes/novo` → guarda o `id`
+2. `POST /publicacoes/upload-imagens?id=...` com `FormData` e até 3 arquivos no campo `imagens`
+3. Exibir com `Image.network('$host${caminho}')` (ex.: `http://10.0.2.2:7000/uploads/publicacoes/a1.jpg`)
+
+Exemplo Dio (upload):
+
+```dart
+Future<Map<String, dynamic>> uploadImagensPublicacao(
+  String id,
+  List<String> caminhosArquivos,
+) async {
+  final formData = FormData();
+  for (final caminho in caminhosArquivos.take(3)) {
+    formData.files.add(MapEntry(
+      'imagens',
+      await MultipartFile.fromFile(caminho),
+    ));
+  }
+  final response = await dio.post(
+    '/publicacoes/upload-imagens',
+    queryParameters: {'id': id},
+    data: formData,
+  );
+  return Map<String, dynamic>.from(response.data);
+}
+
+Future<Map<String, dynamic>> uploadImagemPerfil(String id, String caminhoArquivo) async {
+  final formData = FormData.fromMap({
+    'imagem': await MultipartFile.fromFile(caminhoArquivo),
+  });
+  final response = await dio.post(
+    '/usuarios/upload-imagem',
+    queryParameters: {'id': id},
+    data: formData,
+  );
+  return Map<String, dynamic>.from(response.data);
+}
+```
 
 ---
 
@@ -290,6 +387,156 @@ Filtros GET: `id_usuario`, `token`
 
 ---
 
+### 5.7 Cidades — `/cidades`
+
+Dados importados automaticamente na inicialização da API (municípios de Goiás via IBGE).  
+**Somente leitura** — não há criar/editar/apagar.
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/cidades` | Listar / pesquisar por nome |
+| GET | `/cidades/por-id?id={uuid}` | Buscar por ID |
+| GET | `/cidades/por-codigo-ibge?codigo_ibge={codigo}` | Buscar por código IBGE |
+
+Filtros GET `/cidades`: `nome`, `uf`
+
+Exemplos:
+
+```text
+GET /cidades
+GET /cidades?nome=goiânia
+GET /cidades?uf=GO
+GET /cidades/por-id?id=550e8400-e29b-41d4-a716-446655440000
+GET /cidades/por-codigo-ibge?codigo_ibge=5208707
+```
+
+Response item (`200`):
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "codigo_ibge": "5208707",
+  "nome": "Goiânia",
+  "uf": "GO",
+  "data_criacao": "2026-07-10T23:00:00",
+  "data_atualizacao": "2026-07-10T23:00:00"
+}
+```
+
+> `GET /cidades` retorna **lista**.  
+> `GET /cidades/por-id` e `GET /cidades/por-codigo-ibge` retornam **objeto único** (ou `404`).
+
+---
+
+### 5.8 Locais de votação — `/locais-votacao`
+
+Locais oficiais do TSE, vinculados a uma cidade (`id_cidade`).  
+Importados automaticamente na inicialização. O app pode consultar e também cadastrar/editar/inativar.
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/locais-votacao/novo` | Criar |
+| GET | `/locais-votacao` | Listar / filtrar |
+| GET | `/locais-votacao/por-id?id={uuid}` | Buscar por ID |
+| PUT | `/locais-votacao/alterar-dados` | Atualizar |
+| DELETE | `/locais-votacao/apagar?id={uuid}` | Inativar (`ativo = false`) |
+
+Filtros GET `/locais-votacao`:
+
+| Query | Exemplo | Uso |
+|-------|---------|-----|
+| `nome` | `escola` | Pesquisa por nome |
+| `id_cidade` | `uuid` | Locais de uma cidade |
+| `codigo_ibge` | `5208707` | Locais pelo IBGE da cidade |
+| `zona_eleitoral` | `1` | Filtrar por zona |
+| `ativo` | `true` | Só ativos (recomendado na UI) |
+
+Exemplos:
+
+```text
+GET /locais-votacao
+GET /locais-votacao?ativo=true
+GET /locais-votacao?nome=escola
+GET /locais-votacao?id_cidade=550e8400-e29b-41d4-a716-446655440000
+GET /locais-votacao?codigo_ibge=5208707
+GET /locais-votacao?zona_eleitoral=1&ativo=true
+GET /locais-votacao/por-id?id=uuid-do-local
+```
+
+Request criar (`POST /locais-votacao/novo`):
+
+```json
+{
+  "codigo_tse": "93734-1-1015",
+  "nome": "ESCOLA MUNICIPAL CENTRO",
+  "endereco": "RUA DAS FLORES, 100",
+  "bairro": "CENTRO",
+  "cep": "74000000",
+  "zona_eleitoral": "1",
+  "latitude": -16.6869,
+  "longitude": -49.2648,
+  "ativo": true,
+  "id_cidade": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+Request alterar (`PUT /locais-votacao/alterar-dados`) — inclui `id`:
+
+```json
+{
+  "id": "uuid-do-local",
+  "codigo_tse": "93734-1-1015",
+  "nome": "ESCOLA MUNICIPAL CENTRO",
+  "endereco": "RUA DAS FLORES, 100",
+  "bairro": "CENTRO",
+  "cep": "74000000",
+  "zona_eleitoral": "1",
+  "latitude": -16.6869,
+  "longitude": -49.2648,
+  "ativo": true,
+  "id_cidade": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+Campos obrigatórios no create/update: `codigo_tse`, `nome`, `endereco`, `zona_eleitoral`, `id_cidade`.  
+No update, `ativo` também é obrigatório.  
+Opcionais: `bairro`, `cep`, `latitude`, `longitude` (e `ativo` no create; default `true`).
+
+Response item (`200` / `201`):
+
+```json
+{
+  "id": "uuid-do-local",
+  "codigo_tse": "93734-1-1015",
+  "nome": "ESCOLA MUNICIPAL CENTRO",
+  "endereco": "RUA DAS FLORES, 100",
+  "bairro": "CENTRO",
+  "cep": "74000000",
+  "zona_eleitoral": "1",
+  "latitude": -16.68690000,
+  "longitude": -49.26480000,
+  "ativo": true,
+  "id_cidade": "550e8400-e29b-41d4-a716-446655440000",
+  "nome_cidade": "Goiânia",
+  "codigo_ibge": "5208707",
+  "uf": "GO",
+  "data_criacao": "2026-07-10T23:00:00",
+  "data_atualizacao": "2026-07-10T23:00:00"
+}
+```
+
+> `DELETE` retorna `204` sem body. O registro **não é apagado fisicamente** — apenas `ativo` vira `false`.  
+> Na listagem do app, use sempre `?ativo=true` para ocultar inativos.  
+> Nunca envie o nome da cidade no body do local: use apenas `id_cidade`.
+
+Fluxo sugerido no Flutter (cadastro de apoiador / seleção de local):
+
+1. `GET /cidades?nome=...` → usuário escolhe a cidade  
+2. `GET /locais-votacao?id_cidade={id}&ativo=true` → lista os locais da cidade  
+3. Opcional: filtrar por `zona_eleitoral` ou `nome`
+
+---
+
 ## 6. Permissões (resumo)
 
 | Recurso | ADMIN | LIDER |
@@ -299,6 +546,8 @@ Filtros GET: `id_usuario`, `token`
 | Publicações | Todas | Só as próprias |
 | Histórico | Completo | Leitura dos seus apoiadores |
 | Tokens | Todos | Só os próprios |
+| Cidades | Leitura | Leitura |
+| Locais de votação | CRUD | CRUD |
 
 ---
 
@@ -379,6 +628,82 @@ class ApiClient {
     );
     return List<dynamic>.from(response.data);
   }
+
+  // --- Cidades ---
+
+  Future<List<dynamic>> listarCidades({String? nome, String? uf}) async {
+    final response = await dio.get(
+      '/cidades',
+      queryParameters: {
+        if (nome != null) 'nome': nome,
+        if (uf != null) 'uf': uf,
+      },
+    );
+    return List<dynamic>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> buscarCidadePorId(String id) async {
+    final response = await dio.get(
+      '/cidades/por-id',
+      queryParameters: {'id': id},
+    );
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> buscarCidadePorCodigoIbge(String codigoIbge) async {
+    final response = await dio.get(
+      '/cidades/por-codigo-ibge',
+      queryParameters: {'codigo_ibge': codigoIbge},
+    );
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  // --- Locais de votação ---
+
+  Future<List<dynamic>> listarLocaisVotacao({
+    String? nome,
+    String? idCidade,
+    String? codigoIbge,
+    String? zonaEleitoral,
+    bool? ativo,
+  }) async {
+    final response = await dio.get(
+      '/locais-votacao',
+      queryParameters: {
+        if (nome != null) 'nome': nome,
+        if (idCidade != null) 'id_cidade': idCidade,
+        if (codigoIbge != null) 'codigo_ibge': codigoIbge,
+        if (zonaEleitoral != null) 'zona_eleitoral': zonaEleitoral,
+        if (ativo != null) 'ativo': ativo,
+      },
+    );
+    return List<dynamic>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> buscarLocalVotacaoPorId(String id) async {
+    final response = await dio.get(
+      '/locais-votacao/por-id',
+      queryParameters: {'id': id},
+    );
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> criarLocalVotacao(Map<String, dynamic> body) async {
+    final response = await dio.post('/locais-votacao/novo', data: body);
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> alterarLocalVotacao(Map<String, dynamic> body) async {
+    final response = await dio.put('/locais-votacao/alterar-dados', data: body);
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  Future<void> apagarLocalVotacao(String id) async {
+    await dio.delete(
+      '/locais-votacao/apagar',
+      queryParameters: {'id': id},
+    );
+  }
 }
 ```
 
@@ -424,6 +749,69 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) =>
       _$LoginResponseFromJson(json);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Cidade {
+  final String id;
+  final String codigoIbge;
+  final String nome;
+  final String uf;
+  final String dataCriacao;
+  final String dataAtualizacao;
+
+  Cidade({
+    required this.id,
+    required this.codigoIbge,
+    required this.nome,
+    required this.uf,
+    required this.dataCriacao,
+    required this.dataAtualizacao,
+  });
+
+  factory Cidade.fromJson(Map<String, dynamic> json) => _$CidadeFromJson(json);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class LocalVotacao {
+  final String id;
+  final String codigoTse;
+  final String nome;
+  final String endereco;
+  final String? bairro;
+  final String? cep;
+  final String zonaEleitoral;
+  final double? latitude;
+  final double? longitude;
+  final bool ativo;
+  final String idCidade;
+  final String nomeCidade;
+  final String codigoIbge;
+  final String uf;
+  final String dataCriacao;
+  final String dataAtualizacao;
+
+  LocalVotacao({
+    required this.id,
+    required this.codigoTse,
+    required this.nome,
+    required this.endereco,
+    this.bairro,
+    this.cep,
+    required this.zonaEleitoral,
+    this.latitude,
+    this.longitude,
+    required this.ativo,
+    required this.idCidade,
+    required this.nomeCidade,
+    required this.codigoIbge,
+    required this.uf,
+    required this.dataCriacao,
+    required this.dataAtualizacao,
+  });
+
+  factory LocalVotacao.fromJson(Map<String, dynamic> json) =>
+      _$LocalVotacaoFromJson(json);
 }
 ```
 

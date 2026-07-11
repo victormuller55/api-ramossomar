@@ -14,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -63,6 +64,12 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErroResponse> handleJsonInvalido(HttpMessageNotReadableException ex) {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(new ErroResponse(400, "JSON_INVALIDO", "Corpo da requisição inválido ou mal formatado"));
+	}
+
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ResponseEntity<ErroResponse> handleArquivoGrande(MaxUploadSizeExceededException ex) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ErroResponse(400, "ARQUIVO_GRANDE", "O arquivo enviado excede o tamanho máximo permitido"));
 	}
 
 	@ExceptionHandler(Exception.class)

@@ -15,22 +15,28 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UsuarioService {
 
+	private static final String PASTA_USUARIOS = "usuarios";
+
 	private final UsuarioRepository usuarioRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final SegurancaUtil segurancaUtil;
+	private final ArquivoStorageService arquivoStorageService;
 
 	public UsuarioService(
 			UsuarioRepository usuarioRepository,
 			PasswordEncoder passwordEncoder,
-			SegurancaUtil segurancaUtil
+			SegurancaUtil segurancaUtil,
+			ArquivoStorageService arquivoStorageService
 	) {
 		this.usuarioRepository = usuarioRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.segurancaUtil = segurancaUtil;
+		this.arquivoStorageService = arquivoStorageService;
 	}
 
 	@Transactional
@@ -47,7 +53,6 @@ public class UsuarioService {
 		usuario.setSenha(passwordEncoder.encode(request.getSenha()));
 		usuario.setPerfil(request.getPerfil());
 		usuario.setTelefone(request.getTelefone());
-		usuario.setImagem(request.getImagem());
 		usuario.setAtivo(request.getAtivo() == null || request.getAtivo());
 
 		return MapperUtil.paraUsuarioResponse(usuarioRepository.save(usuario));
@@ -79,7 +84,6 @@ public class UsuarioService {
 		usuario.setEmail(request.getEmail().toLowerCase().trim());
 		usuario.setPerfil(request.getPerfil());
 		usuario.setTelefone(request.getTelefone());
-		usuario.setImagem(request.getImagem());
 		usuario.setAtivo(request.getAtivo());
 
 		if (request.getSenha() != null && !request.getSenha().isBlank()) {
@@ -87,6 +91,23 @@ public class UsuarioService {
 		}
 
 		return MapperUtil.paraUsuarioResponse(usuarioRepository.save(usuario));
+	}
+
+	@Transactional
+	public UsuarioResponse uploadImagemPerfil(UUID id, MultipartFile imagem) {
+		segurancaUtil.exigirAdminOuProprioUsuario(id);
+		Usuario usuario = buscarPorId(id);
+
+		String imagemAnterior = usuario.getImagem();
+		String caminho = arquivoStorageService.salvarImagem(imagem, PASTA_USUARIOS);
+		usuario.setImagem(caminho);
+		Usuario salvo = usuarioRepository.save(usuario);
+
+		if (imagemAnterior != null && !imagemAnterior.equals(caminho)) {
+			arquivoStorageService.excluirSeExistir(imagemAnterior);
+		}
+
+		return MapperUtil.paraUsuarioResponse(salvo);
 	}
 
 	@Transactional

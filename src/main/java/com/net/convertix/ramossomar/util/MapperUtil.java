@@ -1,12 +1,16 @@
 package com.net.convertix.ramossomar.util;
 
 import com.net.convertix.ramossomar.dto.response.ApoiadorResponse;
+import com.net.convertix.ramossomar.dto.response.CidadeResponse;
 import com.net.convertix.ramossomar.dto.response.HistoricoApoiadorResponse;
+import com.net.convertix.ramossomar.dto.response.LocalVotacaoResponse;
 import com.net.convertix.ramossomar.dto.response.PublicacaoResponse;
 import com.net.convertix.ramossomar.dto.response.TokenRefreshResponse;
 import com.net.convertix.ramossomar.dto.response.UsuarioResponse;
 import com.net.convertix.ramossomar.model.Apoiador;
+import com.net.convertix.ramossomar.model.Cidade;
 import com.net.convertix.ramossomar.model.HistoricoApoiador;
+import com.net.convertix.ramossomar.model.LocalVotacao;
 import com.net.convertix.ramossomar.model.Publicacao;
 import com.net.convertix.ramossomar.model.TokenRefresh;
 import com.net.convertix.ramossomar.model.Usuario;
@@ -76,8 +80,7 @@ public final class MapperUtil {
 		response.setNome_autor(publicacao.getAutor().getNome());
 		response.setTitulo(publicacao.getTitulo());
 		response.setConteudo(publicacao.getConteudo());
-		response.setMidia(publicacao.getMidia());
-		response.setTipo_midia(publicacao.getTipoMidia());
+		response.setImagens(publicacao.obterImagens());
 		response.setData_criacao(publicacao.getDataCriacao());
 		response.setData_atualizacao(publicacao.getDataAtualizacao());
 		return response;
@@ -90,6 +93,38 @@ public final class MapperUtil {
 		response.setToken(token.getToken());
 		response.setExpira_em(token.getExpiraEm());
 		response.setData_criacao(token.getDataCriacao());
+		return response;
+	}
+
+	public static CidadeResponse paraCidadeResponse(Cidade cidade) {
+		CidadeResponse response = new CidadeResponse();
+		response.setId(cidade.getId());
+		response.setCodigo_ibge(cidade.getCodigoIbge());
+		response.setNome(cidade.getNome());
+		response.setUf(cidade.getUf());
+		response.setData_criacao(cidade.getDataCriacao());
+		response.setData_atualizacao(cidade.getDataAtualizacao());
+		return response;
+	}
+
+	public static LocalVotacaoResponse paraLocalVotacaoResponse(LocalVotacao local) {
+		LocalVotacaoResponse response = new LocalVotacaoResponse();
+		response.setId(local.getId());
+		response.setCodigo_tse(local.getCodigoTse());
+		response.setNome(local.getNome());
+		response.setEndereco(local.getEndereco());
+		response.setBairro(local.getBairro());
+		response.setCep(local.getCep());
+		response.setZona_eleitoral(local.getZonaEleitoral());
+		response.setLatitude(local.getLatitude());
+		response.setLongitude(local.getLongitude());
+		response.setAtivo(local.getAtivo());
+		response.setId_cidade(local.getCidade().getId());
+		response.setNome_cidade(local.getCidade().getNome());
+		response.setCodigo_ibge(local.getCidade().getCodigoIbge());
+		response.setUf(local.getCidade().getUf());
+		response.setData_criacao(local.getDataCriacao());
+		response.setData_atualizacao(local.getDataAtualizacao());
 		return response;
 	}
 

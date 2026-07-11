@@ -23,7 +23,7 @@ public class UsuarioResponse {
 	@Schema(description = "Telefone")
 	private String telefone;
 
-	@Schema(description = "Caminho ou URL da imagem")
+	@Schema(description = "Caminho relativo da imagem de perfil no servidor")
 	private String imagem;
 
 	@Schema(description = "Indica se está ativo")

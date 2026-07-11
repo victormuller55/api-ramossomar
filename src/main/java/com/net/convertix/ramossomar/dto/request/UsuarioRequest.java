@@ -34,10 +34,6 @@ public class UsuarioRequest {
 	@Schema(description = "Telefone de contato", example = "41999999999")
 	private String telefone;
 
-	@Size(max = 500, message = "A imagem deve ter no máximo 500 caracteres")
-	@Schema(description = "Caminho ou URL da imagem", example = "/uploads/usuarios/joao.jpg")
-	private String imagem;
-
 	@Schema(description = "Indica se o usuário está ativo", example = "true")
 	private Boolean ativo = true;
 
@@ -79,14 +75,6 @@ public class UsuarioRequest {
 
 	public void setTelefone(String telefone) {
 		this.telefone = telefone;
-	}
-
-	public String getImagem() {
-		return imagem;
-	}
-
-	public void setImagem(String imagem) {
-		this.imagem = imagem;
 	}
 
 	public Boolean getAtivo() {
