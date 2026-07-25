@@ -49,16 +49,15 @@ public class ApoiadorService {
 		UsuarioAutenticado autenticado = segurancaUtil.obterUsuarioAutenticado();
 		validarAcessoLider(request.getId_lider(), autenticado);
 
-		if (apoiadorRepository.existsByCpfAndDataExclusaoIsNull(request.getCpf())) {
-			throw new NegocioException("Já existe um apoiador ativo com este CPF");
-		}
+		String cpf = normalizarCpf(request.getCpf());
+		validarCpfUnico(cpf, null);
 
 		Usuario lider = buscarLider(request.getId_lider());
 
 		Apoiador apoiador = new Apoiador();
 		apoiador.setLider(lider);
 		apoiador.setNome(request.getNome());
-		apoiador.setCpf(request.getCpf());
+		apoiador.setCpf(cpf);
 		apoiador.setDataNascimento(request.getData_nascimento());
 		apoiador.setTelefone(request.getTelefone());
 		apoiador.setWhatsapp(request.getWhatsapp());
@@ -102,9 +101,8 @@ public class ApoiadorService {
 		validarAcessoLider(apoiador.getLider().getId(), autenticado);
 		validarAcessoLider(request.getId_lider(), autenticado);
 
-		if (apoiadorRepository.existsByCpfAndDataExclusaoIsNullAndIdNot(request.getCpf(), request.getId())) {
-			throw new NegocioException("Já existe um apoiador ativo com este CPF");
-		}
+		String cpf = normalizarCpf(request.getCpf());
+		validarCpfUnico(cpf, request.getId());
 
 		Usuario lider = buscarLider(request.getId_lider());
 		Usuario usuarioAlteracao = usuarioRepository.findById(autenticado.getId())
@@ -112,7 +110,7 @@ public class ApoiadorService {
 
 		registrarAlteracao(apoiador, usuarioAlteracao, "id_lider", apoiador.getLider().getId(), lider.getId());
 		registrarAlteracao(apoiador, usuarioAlteracao, "nome", apoiador.getNome(), request.getNome());
-		registrarAlteracao(apoiador, usuarioAlteracao, "cpf", apoiador.getCpf(), request.getCpf());
+		registrarAlteracao(apoiador, usuarioAlteracao, "cpf", apoiador.getCpf(), cpf);
 		registrarAlteracao(apoiador, usuarioAlteracao, "data_nascimento", apoiador.getDataNascimento(), request.getData_nascimento());
 		registrarAlteracao(apoiador, usuarioAlteracao, "telefone", apoiador.getTelefone(), request.getTelefone());
 		registrarAlteracao(apoiador, usuarioAlteracao, "whatsapp", apoiador.getWhatsapp(), request.getWhatsapp());
@@ -128,7 +126,7 @@ public class ApoiadorService {
 
 		apoiador.setLider(lider);
 		apoiador.setNome(request.getNome());
-		apoiador.setCpf(request.getCpf());
+		apoiador.setCpf(cpf);
 		apoiador.setDataNascimento(request.getData_nascimento());
 		apoiador.setTelefone(request.getTelefone());
 		apoiador.setWhatsapp(request.getWhatsapp());
@@ -177,6 +175,25 @@ public class ApoiadorService {
 		historico.setValorAnterior(MapperUtil.valorComoTexto(valorAnterior));
 		historico.setValorNovo(MapperUtil.valorComoTexto(valorNovo));
 		historicoApoiadorRepository.save(historico);
+	}
+
+	private String normalizarCpf(String cpf) {
+		if (cpf == null || cpf.isBlank()) {
+			return null;
+		}
+		return cpf.trim();
+	}
+
+	private void validarCpfUnico(String cpf, UUID idAtual) {
+		if (cpf == null) {
+			return;
+		}
+		boolean existe = idAtual == null
+				? apoiadorRepository.existsByCpfAndDataExclusaoIsNull(cpf)
+				: apoiadorRepository.existsByCpfAndDataExclusaoIsNullAndIdNot(cpf, idAtual);
+		if (existe) {
+			throw new NegocioException("Já existe um apoiador ativo com este CPF");
+		}
 	}
 
 	private void validarAcessoLider(UUID idLider, UsuarioAutenticado autenticado) {

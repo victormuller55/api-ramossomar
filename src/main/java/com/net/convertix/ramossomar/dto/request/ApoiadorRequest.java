@@ -21,9 +21,8 @@ public class ApoiadorRequest {
 	@Schema(description = "Nome do apoiador", example = "Maria Souza")
 	private String nome;
 
-	@NotBlank(message = "O CPF é obrigatório")
-	@Pattern(regexp = "\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}", message = "CPF inválido")
-	@Schema(description = "CPF do apoiador", example = "12345678901")
+	@Pattern(regexp = "^$|\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}", message = "CPF inválido")
+	@Schema(description = "CPF do apoiador (opcional)", example = "12345678901")
 	private String cpf;
 
 	@Schema(description = "Data de nascimento", example = "1990-05-20")
@@ -57,10 +56,12 @@ public class ApoiadorRequest {
 	@Schema(description = "Bairro", example = "Centro")
 	private String bairro;
 
+	@NotBlank(message = "A cidade é obrigatória")
 	@Size(max = 100, message = "A cidade deve ter no máximo 100 caracteres")
 	@Schema(description = "Cidade", example = "Araucária")
 	private String cidade;
 
+	@NotBlank(message = "O local de votação é obrigatório")
 	@Size(max = 200, message = "O local de votação deve ter no máximo 200 caracteres")
 	@Schema(description = "Local de votação", example = "Escola Municipal X")
 	private String local_votacao;

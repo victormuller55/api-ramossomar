@@ -50,7 +50,7 @@ public class Apoiador {
 	@Column(name = "nome", nullable = false, length = 150)
 	private String nome;
 
-	@Column(name = "cpf", nullable = false, length = 14)
+	@Column(name = "cpf", length = 14)
 	private String cpf;
 
 	@Column(name = "data_nascimento")
@@ -77,10 +77,10 @@ public class Apoiador {
 	@Column(name = "bairro", length = 100)
 	private String bairro;
 
-	@Column(name = "cidade", length = 100)
+	@Column(name = "cidade", nullable = false, length = 100)
 	private String cidade;
 
-	@Column(name = "local_votacao", length = 200)
+	@Column(name = "local_votacao", nullable = false, length = 200)
 	private String localVotacao;
 
 	@Enumerated(EnumType.STRING)
