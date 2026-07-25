@@ -33,12 +33,14 @@ public class AuthController {
 	@SecurityRequirements
 	@Operation(
 			summary = "Realizar login",
-			description = "Autentica o usuário com e-mail e senha e retorna um JWT válido até o fim do dia. Rota pública — não exige token."
+			description = "Autentica o usuário com e-mail e senha e retorna um JWT (validade configurável, padrão 24h). Rota pública — não exige token JWT; em produção exige X-Client-Id/X-Client-Secret."
 	)
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Login realizado com sucesso",
 					content = @Content(schema = @Schema(implementation = LoginResponse.class))),
-			@ApiResponse(responseCode = "400", description = "Credenciais inválidas ou dados incorretos",
+			@ApiResponse(responseCode = "401", description = "Usuário ou senha inválidos",
+					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+			@ApiResponse(responseCode = "429", description = "Rate limit excedido",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
 			@ApiResponse(responseCode = "500", description = "Erro interno",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class)))

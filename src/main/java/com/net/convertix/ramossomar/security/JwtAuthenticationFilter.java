@@ -1,10 +1,7 @@
 package com.net.convertix.ramossomar.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.net.convertix.ramossomar.dto.response.ErroResponse;
+import com.net.convertix.ramossomar.model.Usuario;
+import com.net.convertix.ramossomar.model.enums.Perfil;
 import com.net.convertix.ramossomar.repository.UsuarioRepository;
 import com.net.convertix.ramossomar.util.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -13,7 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
-import org.springframework.http.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -23,17 +23,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+	private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
 	private final JwtUtil jwtUtil;
 	private final UsuarioRepository usuarioRepository;
-	private final ObjectMapper objectMapper;
 
-	public JwtAuthenticationFilter(JwtUtil jwtUtil, UsuarioRepository usuarioRepository) {
+	public JwtAuthenticationFilter(JwtUtil jwtUtil, @Lazy UsuarioRepository usuarioRepository) {
 		this.jwtUtil = jwtUtil;
 		this.usuarioRepository = usuarioRepository;
-		this.objectMapper = new ObjectMapper()
-				.registerModule(new JavaTimeModule())
-				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-				.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 	}
 
 	@Override
@@ -42,48 +39,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			HttpServletResponse response,
 			FilterChain filterChain
 	) throws ServletException, IOException {
-		String authorization = request.getHeader("Authorization");
+		String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-		if (authorization == null || !authorization.startsWith("Bearer ")) {
-			filterChain.doFilter(request, response);
-			return;
+		if (authorization != null && authorization.startsWith("Bearer ")) {
+			String token = authorization.substring(7);
+			try {
+				if (!jwtUtil.tokenValido(token)) {
+					SecurityContextHolder.clearContext();
+				} else {
+					UUID idUsuario = jwtUtil.extrairIdUsuario(token);
+					Perfil tipoToken = jwtUtil.extrairPerfil(token);
+					var usuarioOpt = usuarioRepository.findById(idUsuario);
+
+					if (usuarioOpt.isPresent()
+							&& Boolean.TRUE.equals(usuarioOpt.get().getAtivo())
+							&& claimsCompativeisComBanco(usuarioOpt.get(), tipoToken)) {
+						UsuarioAutenticado usuarioAutenticado = new UsuarioAutenticado(usuarioOpt.get());
+						UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+								usuarioAutenticado,
+								null,
+								usuarioAutenticado.getAuthorities()
+						);
+						authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+						SecurityContextHolder.getContext().setAuthentication(authentication);
+					} else {
+						SecurityContextHolder.clearContext();
+					}
+				}
+			} catch (Exception ex) {
+				SecurityContextHolder.clearContext();
+				log.debug("Falha na autenticação JWT");
+			}
 		}
 
-		String token = authorization.substring(7);
-
-		try {
-			if (!jwtUtil.tokenValido(token)) {
-				escreverErro(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALIDO", "Token JWT inválido ou expirado");
-				return;
-			}
-
-			UUID idUsuario = jwtUtil.extrairIdUsuario(token);
-			var usuarioOpt = usuarioRepository.findById(idUsuario);
-
-			if (usuarioOpt.isEmpty() || !Boolean.TRUE.equals(usuarioOpt.get().getAtivo())) {
-				escreverErro(response, HttpServletResponse.SC_UNAUTHORIZED, "USUARIO_INVALIDO", "Usuário do token não encontrado ou inativo");
-				return;
-			}
-
-			UsuarioAutenticado usuarioAutenticado = new UsuarioAutenticado(usuarioOpt.get());
-			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-					usuarioAutenticado,
-					null,
-					usuarioAutenticado.getAuthorities()
-			);
-			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-
-			filterChain.doFilter(request, response);
-		} catch (Exception ex) {
-			escreverErro(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALIDO", "Token JWT inválido ou expirado");
-		}
+		filterChain.doFilter(request, response);
 	}
 
-	private void escreverErro(HttpServletResponse response, int status, String erro, String mensagem) throws IOException {
-		response.setStatus(status);
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-		response.setCharacterEncoding("UTF-8");
-		objectMapper.writeValue(response.getWriter(), new ErroResponse(status, erro, mensagem));
+	/**
+	 * Evita claims stale após mudança de perfil no banco.
+	 */
+	private boolean claimsCompativeisComBanco(Usuario usuario, Perfil tipoToken) {
+		return usuario.getPerfil() == tipoToken;
 	}
 }

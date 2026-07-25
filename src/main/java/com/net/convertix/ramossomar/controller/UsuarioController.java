@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,6 +43,7 @@ public class UsuarioController {
 	}
 
 	@PostMapping("/novo")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Criar usuário", description = "Cadastra um novo usuário com senha criptografada em BCrypt. A imagem de perfil é enviada depois via upload.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "Usuário criado",
@@ -58,6 +60,7 @@ public class UsuarioController {
 	}
 
 	@GetMapping
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Listar usuários", description = "Lista usuários com filtros opcionais via query params.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Lista retornada"),
@@ -116,6 +119,7 @@ public class UsuarioController {
 	}
 
 	@DeleteMapping("/apagar")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Apagar usuário", description = "Inativa o usuário (desativação lógica).")
 	@ApiResponses({
 			@ApiResponse(responseCode = "204", description = "Usuário inativado"),

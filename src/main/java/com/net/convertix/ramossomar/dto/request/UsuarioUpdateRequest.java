@@ -26,7 +26,7 @@ public class UsuarioUpdateRequest {
 	@Schema(description = "E-mail único do usuário", example = "joao@email.com")
 	private String email;
 
-	@Size(min = 6, max = 100, message = "A senha deve ter entre 6 e 100 caracteres")
+	@Size(min = 8, max = 128, message = "A senha deve ter entre 8 e 128 caracteres")
 	@Schema(description = "Nova senha (opcional). Se informada, será criptografada", example = "novaSenha123")
 	private String senha;
 

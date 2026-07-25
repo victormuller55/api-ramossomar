@@ -193,10 +193,74 @@ public class ArquivoStorageService {
 		if (contentType == null || !CONTENT_TYPES_PERMITIDOS.contains(contentType.toLowerCase(Locale.ROOT))) {
 			throw new NegocioException("Apenas imagens são permitidas. Use JPG, PNG, WEBP ou GIF");
 		}
+		contentType = contentType.toLowerCase(Locale.ROOT);
 
 		String extensao = extrairExtensao(arquivo.getOriginalFilename());
 		if (!EXTENSOES_PERMITIDAS.contains(extensao)) {
 			throw new NegocioException("Apenas imagens são permitidas. Use JPG, PNG, WEBP ou GIF");
+		}
+
+		String tipoDetectado = detectarTipoPorAssinatura(arquivo);
+		if (tipoDetectado == null || !tipoCompativel(contentType, tipoDetectado)) {
+			throw new NegocioException("Conteúdo do arquivo não corresponde ao tipo informado");
+		}
+	}
+
+	private boolean tipoCompativel(String contentType, String tipoDetectado) {
+		if (contentType.equals(tipoDetectado)) {
+			return true;
+		}
+		// image/jpg às vezes aparece como alias de jpeg
+		return "image/jpeg".equals(tipoDetectado) && "image/jpg".equals(contentType);
+	}
+
+	private String detectarTipoPorAssinatura(MultipartFile arquivo) {
+		try (InputStream in = arquivo.getInputStream()) {
+			byte[] header = in.readNBytes(12);
+			if (header.length < 3) {
+				return null;
+			}
+			// JPEG: FF D8 FF
+			if ((header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
+				return "image/jpeg";
+			}
+			// PNG: 89 50 4E 47 0D 0A 1A 0A
+			if (header.length >= 8
+					&& (header[0] & 0xFF) == 0x89
+					&& header[1] == 0x50
+					&& header[2] == 0x4E
+					&& header[3] == 0x47
+					&& header[4] == 0x0D
+					&& header[5] == 0x0A
+					&& header[6] == 0x1A
+					&& header[7] == 0x0A) {
+				return "image/png";
+			}
+			// GIF: GIF87a / GIF89a
+			if (header.length >= 6
+					&& header[0] == 'G'
+					&& header[1] == 'I'
+					&& header[2] == 'F'
+					&& header[3] == '8'
+					&& (header[4] == '7' || header[4] == '9')
+					&& header[5] == 'a') {
+				return "image/gif";
+			}
+			// WEBP: RIFF....WEBP
+			if (header.length >= 12
+					&& header[0] == 'R'
+					&& header[1] == 'I'
+					&& header[2] == 'F'
+					&& header[3] == 'F'
+					&& header[8] == 'W'
+					&& header[9] == 'E'
+					&& header[10] == 'B'
+					&& header[11] == 'P') {
+				return "image/webp";
+			}
+			return null;
+		} catch (IOException e) {
+			return null;
 		}
 	}
 

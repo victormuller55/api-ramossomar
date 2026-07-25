@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(BadCredentialsException.class)
 	public ResponseEntity<ErroResponse> handleBadCredentials(BadCredentialsException ex) {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(new ErroResponse(401, "CREDENCIAIS_INVALIDAS", "E-mail ou senha inválidos"));
+				.body(new ErroResponse(401, "CREDENCIAIS_INVALIDAS", "Usuário ou senha inválidos."));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -75,8 +75,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErroResponse> handleGeral(Exception ex) {
 		log.error("Erro interno não tratado", ex);
-		String mensagem = ex.getMessage() != null ? ex.getMessage() : "Ocorreu um erro inesperado no servidor";
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(new ErroResponse(500, "ERRO_INTERNO", mensagem));
+				.body(new ErroResponse(500, "ERRO_INTERNO", "Erro interno do servidor"));
 	}
 }

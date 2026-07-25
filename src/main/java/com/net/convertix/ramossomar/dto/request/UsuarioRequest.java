@@ -22,8 +22,8 @@ public class UsuarioRequest {
 	private String email;
 
 	@NotBlank(message = "A senha é obrigatória")
-	@Size(min = 6, max = 100, message = "A senha deve ter entre 6 e 100 caracteres")
-	@Schema(description = "Senha em texto (será criptografada)", example = "senha123")
+	@Size(min = 8, max = 128, message = "A senha deve ter entre 8 e 128 caracteres")
+	@Schema(description = "Senha em texto (será criptografada)", example = "senha1234")
 	private String senha;
 
 	@NotNull(message = "O perfil é obrigatório")

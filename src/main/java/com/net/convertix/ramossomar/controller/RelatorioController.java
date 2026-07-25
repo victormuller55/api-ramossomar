@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,6 +37,7 @@ public class RelatorioController {
 	}
 
 	@GetMapping("/apoiadores")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(
 			summary = "Exportar cadastrados",
 			description = "Gera arquivo XLSX ou PDF com a lista de apoiadores. Somente ADMIN."

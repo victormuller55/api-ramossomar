@@ -6,6 +6,7 @@ import com.net.convertix.ramossomar.repository.UsuarioRepository;
 import com.net.convertix.ramossomar.service.CidadeLocalVotacaoImportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -21,8 +22,15 @@ public class DataInitializer {
 
 	@Bean
 	@Order(1)
-	CommandLineRunner inicializarAdmin(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+	CommandLineRunner inicializarAdmin(
+			UsuarioRepository usuarioRepository,
+			PasswordEncoder passwordEncoder,
+			@Value("${app.admin.auto-create:false}") boolean autoCreate
+	) {
 		return args -> {
+			if (!autoCreate) {
+				return;
+			}
 			if (!usuarioRepository.existsByEmail("admin@ramossomar.com")) {
 				Usuario admin = new Usuario();
 				admin.setNome("Administrador");
