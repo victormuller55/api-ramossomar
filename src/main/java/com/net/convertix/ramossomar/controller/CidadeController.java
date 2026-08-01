@@ -48,6 +48,20 @@ public class CidadeController {
 		return ResponseEntity.ok(cidadeService.listar(nome, uf));
 	}
 
+	@GetMapping("/todos")
+	@Operation(
+			summary = "Listar todas as cidades",
+			description = "Retorna todas as cidades de uma vez, sem paginação nem filtros. Pode demorar conforme o volume de dados."
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Lista completa retornada"),
+			@ApiResponse(responseCode = "500", description = "Erro interno",
+					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+	})
+	public ResponseEntity<List<CidadeResponse>> listarTodos() {
+		return ResponseEntity.ok(cidadeService.listarTodos());
+	}
+
 	@GetMapping("/por-id")
 	@Operation(summary = "Buscar cidade por ID", description = "Retorna uma cidade pelo identificador UUID.")
 	@ApiResponses({

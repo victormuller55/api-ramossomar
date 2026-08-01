@@ -1,23 +1,23 @@
 # Política de Privacidade — Ramos Somar
 
-**Última atualização:** 25 de julho de 2026
-
-Este documento descreve como os dados pessoais são tratados no ecossistema **Ramos Somar** (aplicativo móvel, painel web e API backend), com base nas funcionalidades implementadas no backend e no aplicativo móvel.
-
-O controlador é uma **pessoa física** (ainda sem empresa constituída).
+**Última atualização:** 25 de julho de 2026  
+**Escopo desta versão:** backend (API Ramos Somar) + aplicativo mobile Flutter (`app_ramos_candidatura`). Itens ainda pendentes do controlador (hospedagem, retenção, bases legais definitivas) permanecem marcados com `[DEFINIR]`.
 
 ---
 
 ## 1. Quem somos e o que é o Ramos Somar
 
-O **Ramos Somar** é uma plataforma de gestão de campanha política / articulação eleitoral, destinada a usuários autorizados (administradores e líderes), para:
+O **Ramos Somar** é uma plataforma de gestão de campanha política / articulação eleitoral. A API backend (`API Ramos Somar`) oferece gestão de usuários, apoiadores, publicações, tokens de autenticação, cidades/locais de votação e relatórios.
 
-- cadastro e gestão de apoiadores;
-- registro de intenção de voto e observações de campanha;
-- consulta a cidades e locais de votação (dados públicos IBGE/TSE);
+Funcionalidades tratadas pela API:
+
+- cadastro e gestão de usuários (Administrador e Líder);
+- cadastro e gestão de apoiadores (incluindo intenção de voto);
 - publicações internas com imagens;
+- consulta a cidades e locais de votação (dados públicos IBGE/TSE);
+- histórico de alterações de apoiadores;
 - geração de relatórios (PDF/XLSX) para administradores;
-- autenticação e controle de acesso dos usuários do sistema.
+- autenticação e controle de acesso.
 
 **Controlador dos dados (pessoa física):** Victor Muller da Luz  
 **Cidade/UF:** Araucária/PR  
@@ -25,31 +25,32 @@ O **Ramos Somar** é uma plataforma de gestão de campanha política / articula�
 
 **Desenvolvimento técnico da plataforma:** Convertix — contato@convertix.net  
 
-Não há Encarregado (DPO) formalmente nomeado neste momento. As solicitações sobre dados pessoais devem ser enviadas ao e-mail de privacidade acima.
+Não há Encarregado (DPO) formalmente nomeado neste momento. Solicitações sobre dados pessoais devem ser enviadas ao e-mail de privacidade acima.
 
-### 1.1. Aplicativo móvel
+### 1.1. Clientes da API
 
 | Item | Valor |
 |------|--------|
-| Nome do app | Ramos Somar |
-| Plataformas | Android e iOS |
-| Identificador Android (`applicationId`) | `com.net.convertix.ramossomar` |
-| Identificador iOS (Bundle ID) | `com.net.convertix.ramossomar` |
-| API consumida | `https://ramossomar.api.convertix.net.br` (ambiente de produção) |
+| Nome do produto | Ramos Somar |
+| Plataformas do app | Android e iOS (Flutter) |
+| Identificador Android | `com.net.convertix.ramossomar` |
+| Identificador iOS | `com.net.convertix.ramossomar` |
+| URL da API (produção) | `https://ramossomar.api.convertix.net.br` |
 | Identificador de cliente da API | `ramossomar-mobile` |
+| Painel web | Não há painel web publicado; o cliente oficial é o aplicativo mobile |
 
-O app é de uso interno da campanha (administradores e líderes). **Não há auto-cadastro público de apoiadores** pelo aplicativo.
+O uso é interno da campanha (administradores e líderes). **Não há auto-cadastro público de apoiadores** na API.
 
 ---
 
 ## 2. Abrangência
 
-Esta política aplica-se aos dados pessoais tratados por meio da API Ramos Somar e dos clientes que a consomem (app e painel), incluindo:
+Esta política aplica-se aos dados pessoais tratados pela API Ramos Somar e pelo aplicativo mobile oficial (Android/iOS), incluindo:
 
 - **Usuários do sistema** (perfil Administrador ou Líder);
 - **Apoiadores** cujos dados são cadastrados por líderes ou administradores.
 
-O cadastro de apoiadores é realizado por usuários autorizados da plataforma (não há, no backend atual, auto-cadastro público de apoiador).
+O cadastro de apoiadores é realizado por usuários autorizados (não há endpoint público de auto-cadastro de apoiador).
 
 ---
 
@@ -60,57 +61,62 @@ O cadastro de apoiadores é realizado por usuários autorizados da plataforma (n
 | Dado | Uso principal |
 |------|----------------|
 | Nome | Identificação e exibição no sistema |
-| E-mail | Login e identificação |
-| Senha | Autenticação (armazenada apenas de forma criptografada/hash) |
+| E-mail | Login e identificação (único) |
+| Senha | Autenticação (armazenada apenas com hash BCrypt) |
 | Telefone | Contato operacional |
-| Foto de perfil (imagem) | Identificação visual no sistema |
-| Perfil de acesso (ADMIN / LIDER) | Controle de permissões |
+| Foto de perfil (imagem) | Identificação visual; arquivo no servidor de uploads |
+| Perfil de acesso (`ADMIN` / `LIDER`) | Controle de permissões |
 | Status (ativo/inativo) | Gestão de acesso |
 | Data do último login | Segurança e auditoria operacional |
 | Datas de criação/atualização | Controle interno |
 
-No app, o login é feito com **e-mail e senha**. A edição de perfil permite alterar nome, e-mail, telefone, senha e foto. Administradores podem cadastrar e gerenciar líderes (nome, e-mail, senha, telefone, status e foto).
+Login na API: `e-mail` + `senha` → tokens de acesso.
 
 ### 3.2. Apoiadores
 
 | Dado | Uso principal |
 |------|----------------|
 | Nome | Identificação |
-| CPF | Identificação única / prevenção de duplicidade |
+| CPF | Identificação / prevenção de duplicidade |
 | Data de nascimento | Cadastro e organização da base |
 | Telefone e WhatsApp | Contato de campanha |
 | Endereço completo (CEP, logradouro, número, complemento, bairro, cidade) | Localização e articulação territorial |
 | Local de votação | Organização eleitoral |
-| Intenção de voto (ex.: indeciso, simpatizante, apoiador, confirmado) | Classificação política de campanha |
+| Intenção de voto (`INDECISO`, `SIMPATIZANTE`, `APOIADOR`, `CONFIRMADO`) | Classificação política de campanha |
 | Observações | Anotações operacionais |
 | Vínculo com o líder responsável | Organização da equipe |
 | Data de exclusão lógica (quando aplicável) | Controle de remoção |
 
 **Atenção:** a **intenção de voto** constitui dado pessoal sensível relacionado a opinião política (art. 5º, II, e art. 11 da LGPD).
 
-No app, o formulário de cadastro/edição de pessoa envia esses campos à API. Líderes cadastram apoiadores vinculados ao próprio usuário; administradores podem visualizar a base geral (conforme regras da API).
-
-**Dados de apoiador que o app atual não coleta:** e-mail do apoiador e foto do apoiador.
+**Dados de apoiador que a API atual não modela:** e-mail do apoiador e foto do apoiador.
 
 ### 3.3. Histórico de alterações de apoiadores
 
-Alterações em campos do apoiador podem gerar registros de auditoria contendo o campo alterado, valor anterior e valor novo (incluindo, quando alterados, CPF, telefone, endereço e demais dados). Esses registros existem para rastreabilidade das mudanças.
+Alterações em campos do apoiador podem gerar registros de auditoria com:
 
-No app móvel atual, a consulta visual desse histórico **não está exposta na interface** (os endpoints existem na API).
+- campo alterado;
+- valor anterior;
+- valor novo;
+- usuário responsável;
+- data da alteração.
+
+Esses registros podem conter CPF, telefone, endereço e demais dados pessoais quando esses campos forem alterados.
 
 ### 3.4. Tokens e sessão
 
-- Token de acesso (JWT), contendo identificadores como id do usuário, e-mail, nome e perfil;
-- Refresh token associado ao usuário, com data de expiração.
+- **Token de acesso (JWT):** contém id do usuário, e-mail, nome e perfil; validade padrão de 24 horas; autenticação via `Authorization: Bearer`;
+- **Refresh token:** UUID associado ao usuário, com data de expiração, armazenado em banco.
 
-A autenticação é feita por **Bearer JWT** (sem cookies de sessão no backend).
+A API é **stateless** (sem sessão de servidor e **sem cookies** de sessão). CORS está configurado com `allow-credentials=false`.
 
-**No aplicativo móvel:**
+**No aplicativo mobile (Flutter):**
 
-- o **token de acesso** é armazenado em armazenamento seguro do dispositivo (`FlutterSecureStorage`; no Android, SharedPreferences criptografado);
-- dados do usuário logado (incluindo eventual refresh token retornado pela API) ficam em `SharedPreferences` locais;
-- a sessão local do app é considerada válida **apenas no mesmo dia** do login; no dia seguinte, a sessão local é limpa e o usuário precisa autenticar novamente;
-- no logout, token, dados do usuário e caches locais de listagens são removidos do aparelho.
+- **Token de acesso (JWT):** armazenado em armazenamento seguro do aparelho (`FlutterSecureStorage`; no Android, SharedPreferences criptografadas);
+- **Dados do usuário logado** (id, nome, e-mail, perfil, telefone, foto, e eventualmente `refresh_token` retornado no login): em `SharedPreferences` (sem o JWT de acesso no JSON persistido);
+- **Controle de sessão local:** o app grava o dia do login e **expira a sessão local ao virar o dia civil** (mesmo que o JWT ainda seja válido na API); nesse caso limpa token, usuário e cache;
+- **Logout:** remove JWT, dados do usuário logado, marcação do dia da sessão e cache de listagens; o `device_id` local permanece no aparelho;
+- **Sessão inválida / 401:** o app limpa a sessão local e redireciona para o login.
 
 ### 3.5. Publicações
 
@@ -118,99 +124,113 @@ A autenticação é feita por **Bearer JWT** (sem cookies de sessão no backend)
 - Até três imagens;
 - Autor (usuário do sistema).
 
-No app, publicações podem ser criadas por administradores; edição/exclusão segue regras de perfil (administrador ou autor). Imagens são selecionadas da **galeria** do aparelho.
+Imagens ficam no armazenamento de uploads do servidor e podem ser acessíveis por URL pública (`/uploads/**`), conforme configuração.
 
-### 3.6. Dados de referência (não são “conta”, mas podem ser consultados)
+### 3.6. Dados de referência (fontes públicas)
 
-- Cidades (IBGE);
-- Locais de votação (TSE), incluindo nome, endereço, CEP, zona e coordenadas geográficas públicas.
+- **Cidades** (IBGE): código, nome, UF;
+- **Locais de votação** (TSE): nome, endereço, bairro, CEP, zona eleitoral, coordenadas geográficas públicas, vínculo com cidade.
 
-As coordenadas de locais de votação vêm da base de referência da API. O app **não solicita nem coleta geolocalização em tempo real** do aparelho do usuário.
+Esses dados são importados pela API a partir de fontes públicas. **Não são dados de “conta”**, mas podem ser associados a apoiadores no cadastro.
 
-### 3.7. Metadados técnicos do aplicativo
+### 3.7. Metadados técnicos das requisições
 
-Em requisições à API, o app envia cabeçalhos técnicos, entre eles:
+A API pode receber/utilizar:
 
-| Cabeçalho | Conteúdo |
-|-----------|----------|
-| `X-Client-Id` | Identificador do cliente (`ramossomar-mobile`) |
-| `X-Client-Secret` | Segredo de cliente do app (validação de acesso à API) |
-| `X-App-Version` | Versão do aplicativo |
-| `X-Platform` | Plataforma (`android` ou `ios`) |
-| `X-Device-Id` | Identificador gerado localmente e persistido no aparelho (UUID) |
-| `Authorization` | Bearer JWT, quando o usuário está autenticado |
+| Dado / cabeçalho | Uso |
+|------------------|-----|
+| `Authorization` | JWT do usuário autenticado |
+| `X-Client-Id` / `X-Client-Secret` | Validação do cliente da API |
+| `X-App-Version` | Diagnóstico (log de debug) |
+| `X-Platform` | Diagnóstico (log de debug) |
+| `X-Device-Id` | Diagnóstico (log de debug) |
+| Endereço IP | Limitação de taxa de requisições (rate limit); não há entidade própria de telemetria no banco |
 
-No backend atual, esses dados são usados para controle de acesso do cliente e registros de diagnóstico (logs), sem modelo próprio de persistência de telemetria.
+Não há modelo de persistência dedicado a telemetria de dispositivo no backend.
 
-### 3.8. Dados armazenados localmente no aparelho
+**No aplicativo mobile:** todas as requisições autenticadas (e as de login) enviam:
 
-Além do envio à API, o app pode manter temporariamente no dispositivo:
+| Cabeçalho | Origem no app |
+|-----------|----------------|
+| `Authorization: Bearer` | JWT salvo no armazenamento seguro (quando logado) |
+| `X-Client-Id` / `X-Client-Secret` | Credenciais do client `ramossomar-mobile` embutidas no app |
+| `X-App-Version` | Versão do app (ex.: `1.0.0`) |
+| `X-Platform` | `android` ou `ios` |
+| `X-Device-Id` | Identificador gerado no aparelho e persistido em `SharedPreferences` (não é ID de publicidade; permanece após logout; é apagado na desinstalação) |
 
-| Dado local | Onde | Finalidade |
-|------------|------|------------|
-| Token de acesso | Armazenamento seguro | Manter sessão autenticada |
-| Dados do usuário logado | Preferências locais | Exibir perfil e controlar permissões na UI |
-| Identificador do dispositivo (`device_id`) | Preferências locais | Header `X-Device-Id` |
-| Cache de listagens (apoiadores, usuários, publicações) | Preferências locais (curta duração, cerca de 5 minutos) | Reduzir chamadas à API e melhorar desempenho |
-| Arquivos de relatório exportados | Diretório do app / compartilhamento do sistema | Geração e compartilhamento de relatórios pelo administrador |
+### 3.8. Dados que a API atual **não** trata
 
-### 3.9. Dados que o ecossistema atual **não** trata (ou não trata no app)
-
-Com base no código atual da API e do app móvel:
+Com base no código do backend:
 
 - cobrança ou pagamento;
-- envio automatizado de e-mail ou SMS pela plataforma;
+- envio automatizado de e-mail ou SMS;
 - login social (Google, Apple etc.);
-- Firebase, Google Analytics, Crashlytics, Sentry, Facebook Ads ou SDK de publicidade;
-- cookies de tracking/analytics no app;
+- Firebase, analytics, crash reporting ou SDKs de publicidade no servidor;
+- cookies de tracking;
 - coleta de geolocalização em tempo real do usuário;
-- acesso à agenda de contatos do aparelho;
-- armazenamento em nuvem de terceiros tipo S3 no backend (uploads ficam em armazenamento local do servidor).
+- armazenamento em nuvem tipo S3 (uploads ficam em disco local do servidor);
+- endpoint self-service de “excluir minha conta” ou “exportar meus dados” para o titular apoiador.
+
+**No aplicativo mobile também não há:**
+
+- GPS / geolocalização em tempo real;
+- acesso a agenda, contatos, microfone com finalidade de áudio (há declaração iOS de microfone associada ao uso de câmera do seletor de imagens, sem uso de gravação de áudio própria do produto);
+- Firebase, Google Analytics, Crashlytics, ads ou SDKs de publicidade/tracking;
+- cookies de navegador (é app nativo, não WebView de produto);
+- login social (Google, Apple etc.);
+- cobrança ou pagamento.
+
+**Coleta só no cliente (além do que vai à API):** `device_id` local; cache temporário de listagens; arquivos temporários de relatórios/exportação; imagens selecionadas da galeria antes do upload.
 
 ---
 
 ## 4. Para que usamos os dados (finalidades)
 
-Tratamos dados pessoais para:
-
 1. **Autenticar** usuários e controlar o acesso conforme o perfil (Administrador ou Líder);
 2. **Cadastrar, consultar, atualizar e gerenciar** apoiadores vinculados a líderes;
 3. **Classificar intenção de voto** e registrar observações de campanha;
 4. **Manter histórico de alterações** dos dados de apoiadores para auditoria;
-5. **Publicar conteúdos internos** (textos e imagens) para uso na plataforma;
+5. **Publicar conteúdos internos** (textos e imagens);
 6. **Consultar cidades e locais de votação** a partir de bases públicas (IBGE/TSE);
-7. **Gerar e exportar relatórios** (PDF/XLSX) com dados de cadastrados, para administradores — inclusive compartilhamento pelo sistema operacional do aparelho (ex.: WhatsApp, e-mail, arquivos), sob responsabilidade de quem exporta;
+7. **Gerar e exportar relatórios** (PDF/XLSX) com dados de apoiadores, para administradores;
 8. **Armazenar imagens** de perfil e de publicações;
-9. **Proteger a plataforma** (limitação de requisições, validação de cliente, medidas de segurança);
-10. **Preencher endereço automaticamente** a partir do CEP informado (consulta ViaCEP — ver seção 7);
-11. **Cumprir obrigações legais** e atender direitos dos titulares, quando aplicável.
+9. **Proteger a plataforma** (rate limiting, validação de cliente, medidas de segurança);
+10. **Cumprir obrigações legais** e atender direitos dos titulares, quando aplicável;
+11. **Preencher automaticamente endereço** no cadastro de apoiador a partir do CEP, mediante consulta do app ao serviço público ViaCEP (apenas o CEP é enviado a esse serviço).
 
 ---
 
 ## 5. Bases legais (LGPD)
 
-As bases legais devem ser confirmadas pelo controlador. Em regra, para este tipo de sistema, podem aplicar-se, conforme o caso:
+As bases legais definitivas devem ser confirmadas pelo controlador. Em regra, podem aplicar-se:
 
 | Tratamento | Base legal típica |
 |------------|-------------------|
-| Conta de usuário (ADMIN/LIDER) | Execução de contrato ou procedimentos preliminares (art. 7º, V) e/ou legítimo interesse (art. 7º, IX), conforme relação jurídica |
-| Cadastro de apoiadores por líderes | Consentimento do titular (art. 7º, I) e/ou outra base válida, **a ser definida e documentada pelo controlador** |
+| Conta de usuário (ADMIN/LIDER) | Execução de contrato ou procedimentos preliminares (art. 7º, V) e/ou legítimo interesse (art. 7º, IX) |
+| Cadastro de apoiadores por líderes | Consentimento do titular (art. 7º, I) e/ou outra base válida, **a ser definida pelo controlador** |
 | Intenção de voto (dado sensível) | Consentimento específico e destacado (art. 11, I) ou outra hipótese do art. 11, **quando cabível** |
 | Segurança, prevenção a fraudes e logs | Legítimo interesse (art. 7º, IX) e/ou cumprimento de obrigação legal |
 | Dados públicos IBGE/TSE | Dados públicos / legítimo interesse operacional |
-| Consulta de CEP (ViaCEP) | Legítimo interesse operacional / execução da funcionalidade de cadastro, com envio apenas do CEP |
 
-**Importante:** como apoiadores são cadastrados por terceiros (líderes), o controlador deve assegurar que exista base legal adequada e, quando necessário, **consentimento** ou outra hipótese válida antes da inclusão dos dados na plataforma.
+**Importante:** como apoiadores são cadastrados por terceiros (líderes), o controlador deve assegurar base legal adequada e, quando necessário, **consentimento** (ou outra hipótese válida) antes da inclusão dos dados.
 
 ---
 
 ## 6. Como os dados são coletados
 
-- **Diretamente do usuário do sistema**, no cadastro/login e atualização de perfil (incluindo foto selecionada na galeria do aparelho);
-- **Por líderes/administradores**, ao cadastrar ou editar apoiadores no app;
-- **Automaticamente**, em metadados técnicos de requisições (IP para rate limit, headers do app, tokens) e cache local no aparelho;
-- **De fontes públicas**, na importação de cidades (IBGE) e locais de votação (TSE);
-- **De serviço de CEP**, quando o usuário informa um CEP no formulário de apoiador (ViaCEP).
+- **Diretamente do usuário do sistema**, no cadastro/login e atualização de perfil (incluindo upload de foto);
+- **Por líderes/administradores**, ao cadastrar ou editar apoiadores via API;
+- **Automaticamente**, em metadados técnicos de requisições (IP para rate limit, headers de cliente, tokens);
+- **De fontes públicas**, na importação de cidades (IBGE) e locais de votação (TSE).
+
+**No aplicativo mobile:**
+
+- **Galeria de fotos:** o usuário pode escolher imagens para foto de perfil e publicações (`image_picker` + recorte local com `image_cropper`); as imagens são enviadas à API no upload;
+- **Câmera:** permissão declarada no Android/iOS para captura de fotos de perfil/publicações (o fluxo atual da UI usa principalmente a galeria);
+- **ViaCEP:** ao informar CEP no cadastro de apoiador, o app consulta `https://viacep.com.br/ws/{cep}/json/` e preenche logradouro/bairro/cidade/UF; **somente o CEP** é enviado ao ViaCEP;
+- **Cache local:** listagens (cadastrados, feed, líderes) podem ficar em `SharedPreferences` por até 5 minutos;
+- **Arquivos locais:** relatórios PDF/XLSX baixados ficam em diretório do app (temporário no Android; Documents no iOS) para abrir/compartilhar;
+- **Internet:** necessária para login, sync e uploads.
 
 ---
 
@@ -218,9 +238,9 @@ As bases legais devem ser confirmadas pelo controlador. Em regra, para este tipo
 
 ### 7.1. Dentro da plataforma
 
-- Líderes acessam os apoiadores sob sua responsabilidade;
+- Líderes acessam apoiadores conforme regras de vínculo/perfil aplicadas pela API;
 - Administradores podem acessar a base e exportar relatórios;
-- Imagens servidas em caminhos públicos de upload podem ser acessíveis por URL, conforme configuração do servidor.
+- Imagens em `/uploads/**` podem ser acessíveis por URL (GET público), conforme configuração do servidor.
 
 ### 7.2. Fora da plataforma
 
@@ -229,131 +249,102 @@ No backend atual **não há** envio automatizado de dados de usuários ou apoiad
 Podem ocorrer compartilhamentos nas hipóteses legais, por exemplo:
 
 - exigência de autoridade competente;
-- prestadores de infraestrutura (hospedagem, banco de dados MySQL) que processam dados sob instrução do controlador;
-- exportações manuais (PDF/XLSX) realizadas por administradores — nesses casos, o uso posterior é de responsabilidade de quem exporta, nos termos da lei e das orientações internas da campanha/controlador;
-- compartilhamento de arquivos de relatório pelo administrador, via apps do próprio aparelho (funcionalidade de compartilhar do sistema operacional).
+- prestadores de infraestrutura (hospedagem, banco MySQL) que processam dados sob instrução do controlador;
+- exportações manuais (PDF/XLSX) realizadas por administradores — o uso posterior é de responsabilidade de quem exporta.
 
-### 7.3. Fontes públicas e serviços de terceiros consultados
+**No aplicativo mobile:** administradores podem gerar relatório de cadastrados (PDF/XLSX) e **compartilhar o arquivo pelo compartilhamento nativo do sistema operacional** (`share_plus` — WhatsApp, e-mail, Files, Drive etc., conforme apps instalados no aparelho). O app não envia o arquivo automaticamente a nenhum destino; o usuário escolhe o destino no sheet do SO.
 
-| Serviço | O que ocorre |
-|---------|----------------|
-| **IBGE** | A API baixa dados públicos de municípios (referência) |
-| **TSE** | A API baixa dados públicos de locais de votação (referência) |
-| **ViaCEP** (`viacep.com.br`) | O **app** envia o CEP digitado para obter logradouro, bairro, cidade e UF e pré-preencher o formulário de endereço do apoiador |
+### 7.3. Fontes públicas e serviços de terceiros
 
-As integrações IBGE/TSE **não enviam** dados pessoais de apoiadores ou usuários a esses órgãos. O ViaCEP recebe apenas o **CEP** informado no formulário.
-
-Não há, no app atual, SDK de analytics, crash reporting ou publicidade que envie dados a terceiros para rastreamento.
+| Serviço | O que ocorre na API |
+|---------|---------------------|
+| **IBGE** | Download de dados públicos de municípios (referência). **Não envia** dados de usuários/apoiadores |
+| **TSE** | Download de dados públicos de locais de votação. **Não envia** dados de usuários/apoiadores |
+| **ViaCEP** | **Não integrado no backend Java.** O **app mobile** consulta o ViaCEP no formulário de endereço do apoiador; **apenas o CEP (8 dígitos)** é enviado. Não são enviados nome, CPF, telefone nem demais dados pessoais |
 
 ---
 
-## 8. Cookies, SDKs e tecnologias do aplicativo
+## 8. Cookies e tecnologias
 
 ### 8.1. Backend / API
 
-- autenticação por **JWT** (Authorization Bearer);
-- **sem cookies de sessão**;
-- CORS configurado sem credenciais de cookie.
+- autenticação por **JWT** (`Authorization: Bearer`);
+- **sem cookies** de sessão;
+- CORS sem credenciais de cookie;
+- cabeçalho `Permissions-Policy` restringindo geolocation, microphone, camera, payment e usb no contexto HTTP da API.
 
-### 8.2. Aplicativo móvel
+### 8.2. Aplicativo mobile (Flutter)
 
-O app **não utiliza cookies** de navegador. Tecnologias relevantes no cliente:
-
-| Tecnologia / pacote | Uso |
-|---------------------|-----|
-| Comunicação HTTP com a API Convertix | Envio e recebimento dos dados da plataforma |
-| `flutter_secure_storage` | Token de autenticação |
-| `shared_preferences` | Dados de sessão, device id e cache de páginas |
-| `image_picker` / `image_cropper` | Seleção e recorte de imagens (perfil e publicações) |
-| `share_plus` / `path_provider` | Exportação e compartilhamento de relatórios |
-| ViaCEP (HTTP) | Autopreenchimento de endereço por CEP |
-
-**Não há** Firebase, Google Analytics, Crashlytics, Ads ou login social no app atual.
-
-Se o painel web utilizar cookies ou analytics no futuro, essa seção deverá ser atualizada.
-
-### 8.3. Permissões do aparelho
-
-#### Android
-
-- Internet;
-- Câmera;
-- Leitura de imagens / armazenamento (conforme versão do sistema).
-
-#### iOS
-
-| Permissão | Finalidade declarada |
-|-----------|----------------------|
-| Câmera | Fotos de perfil e publicações |
-| Microfone | Associado ao uso da câmera (declaração do sistema) |
-| Galeria (leitura) | Anexar imagens de perfil e publicações |
-| Galeria (gravação) | Salvar imagens ao compartilhar/exportar |
-
-**Uso efetivo no código atual do app:** seleção de imagens a partir da **galeria** (perfil e publicações). Não há coleta de localização GPS do aparelho.
-
-O app **não solicita** permissão de localização (`ACCESS_FINE_LOCATION` / equivalentes).
+| Item | Situação |
+|------|----------|
+| Cookies de navegador | Não aplicável (app nativo). A política HTML pode ser aberta em navegador in-app (`url_launcher`), sem cookies de tracking do produto |
+| SDKs de terceiros | Sem Firebase, Analytics, Ads ou crash reporting. Dependências relevantes: `http`, `shared_preferences`, `flutter_secure_storage`, `image_picker`, `image_cropper`, `share_plus`, `path_provider`, `url_launcher`, `open_filex` |
+| Armazenamento local | JWT em armazenamento seguro; usuário logado, `device_id`, dia da sessão e cache de listagens (TTL 5 min) em `SharedPreferences`; arquivos de relatório/exportação no diretório do app |
+| Permissões do aparelho | Internet; câmera; leitura de imagens/galeria (e storage legado no Android conforme versão). **Sem** permissão de localização/GPS |
 
 ---
 
 ## 9. Armazenamento, segurança e localização
 
-### 9.1. Onde ficam os dados
+### 9.1. Onde ficam os dados (backend)
 
-- Banco de dados **MySQL** (dados cadastrais, tokens, histórico etc.);
-- Arquivos de imagem em **armazenamento local do servidor** (diretório de uploads);
-- No aparelho do usuário: token seguro, preferências de sessão, cache temporário e eventuais arquivos de relatório gerados para compartilhamento.
+- Banco de dados **MySQL** (usuários, apoiadores, histórico, tokens, publicações, cidades, locais de votação);
+- Arquivos de imagem em **armazenamento local do servidor** (diretório de uploads; tamanho máximo típico 5 MB; compressão JPEG);
+- Logs da aplicação (diagnóstico/erros), sem painel de analytics dedicado.
 
-A localização do servidor/hospedagem deve ser informada pelo controlador: \[PAÍS / REGIÃO DO DATACENTER\].
+Localização do servidor/hospedagem: `[DEFINIR — PAÍS / REGIÃO DO DATACENTER]`.
+
+**Dados que ficam só no aparelho (app mobile):**
+
+- JWT de acesso (armazenamento seguro);
+- cópia local do perfil do usuário logado e, se retornado no login, refresh token no JSON local;
+- `device_id` gerado localmente;
+- cache de listagens (até 5 minutos);
+- arquivos temporários/locais de relatórios e cópias para compartilhamento;
+- imagens selecionadas/recortadas antes do upload (espaço temporário do SO/app).
 
 ### 9.2. Medidas de segurança observadas no backend
 
-Entre outras:
-
-- senhas com hash (BCrypt);
-- autenticação por token JWT com sessão sem estado no servidor;
-- limitação de taxa de requisições (rate limiting);
+- senhas com hash (BCrypt, strength 12);
+- autenticação JWT com sessão sem estado;
+- rate limiting por IP (ex.: login 5/min, cadastro 10/min, API 100/min);
+- validação de cliente (`X-Client-Id` / `X-Client-Secret`) em produção;
 - cabeçalhos de segurança HTTP;
 - validação de tipos de arquivo em uploads;
-- desativação de documentação interativa (Swagger) em produção;
-- respostas de erro sem exposição detalhada em produção.
+- documentação interativa (Swagger) desativável em produção;
+- respostas de erro sem detalhe excessivo em produção.
 
-### 9.3. Medidas observadas no aplicativo
-
-Entre outras:
-
-- token de acesso em armazenamento seguro do sistema operacional;
-- sessão local com validade diária e limpeza no logout;
-- comunicação com a API em HTTPS no ambiente de produção;
-- validação de cliente da API por identificadores de app (`X-Client-Id` / `X-Client-Secret`).
-
-Nenhuma medida elimina totalmente riscos. Em caso de incidente relevante, o controlador avaliará comunicação aos titulares e à ANPD, nos termos da LGPD.
+Nenhuma medida elimina totalmente riscos. Em incidente relevante, o controlador avaliará comunicação aos titulares e à ANPD, nos termos da LGPD.
 
 ---
 
 ## 10. Retenção e exclusão
 
-Com base no comportamento atual da API:
+Comportamento atual da API:
 
 | Dado / recurso | Comportamento |
 |----------------|---------------|
-| Apoiador | Exclusão lógica (marca data de exclusão); o histórico de alterações pode permanecer |
-| Usuário | Desativação lógica (conta inativa); dados podem permanecer armazenados |
+| Apoiador | Exclusão lógica (`data_exclusao`); o histórico pode permanecer |
+| Usuário | Desativação lógica (`ativo = false`); dados podem permanecer |
 | Publicação | Exclusão física, com remoção dos arquivos de imagem associados |
 | Refresh token | Pode ser removido fisicamente |
-| Histórico de apoiador | Pode ser removido fisicamente por operação administrativa |
-| Dados locais no app | Removidos no logout / expiração diária da sessão; cache de listagens é de curta duração |
+| Histórico de apoiador | Pode ser removido por operação administrativa |
 
-**Prazo de retenção:** \[DEFINIR — ex.: enquanto a campanha/conta estiver ativa + X meses/anos após encerramento, ou até solicitação de exclusão quando cabível\].
+**Prazo de retenção:** `[DEFINIR — ex.: enquanto a campanha/conta estiver ativa + X meses/anos após encerramento, ou até solicitação de exclusão quando cabível]`.
 
-Não há, no backend atual, exclusão automática por prazo nem endpoint de “excluir minha conta” self-service para apoiadores. Solicitações de titulares devem ser atendidas pelos canais do controlador (seção 12).
+Não há exclusão automática por prazo nem endpoint self-service de exclusão/portabilidade para o titular apoiador. Solicitações devem ser feitas pelo canal da seção 12.
 
-Desinstalar o aplicativo remove os dados armazenados localmente no aparelho, mas **não apaga automaticamente** os dados já enviados ao servidor.
+**No aplicativo mobile:**
+
+- **Logout / sessão expirada (dia civil ou 401):** remove JWT, dados do usuário logado, marcação do dia da sessão e cache de listagens. O `device_id` permanece até desinstalar ou limpar dados do app;
+- **Excluir conta (tela Perfil):** o app solicita exclusão/desativação via API e, em seguida, limpa a sessão local e volta ao login;
+- **Desinstalar o app / limpar dados do app:** o sistema operacional remove armazenamento local do app (incluindo token, preferências, `device_id` e arquivos locais). Isso **não apaga** automaticamente os dados já gravados no servidor.
 
 ---
 
 ## 11. Direitos dos titulares (LGPD)
 
-O titular pode solicitar, na medida aplicável à lei e ao caso concreto:
+O titular pode solicitar, na medida aplicável à lei:
 
 - confirmação da existência de tratamento;
 - acesso aos dados;
@@ -373,9 +364,9 @@ Para apoiadores cadastrados por líderes, o pedido pode ser feito ao controlador
 
 ## 12. Crianças e adolescentes
 
-O sistema permite o cadastro de data de nascimento de apoiadores **sem validação automática de idade mínima** no backend nem no app.
+A API permite cadastrar data de nascimento de apoiadores **sem validação automática de idade mínima**.
 
-O controlador deve orientar os usuários (líderes/administradores) a **não cadastrar menores** sem o cumprimento das regras legais aplicáveis (incluindo, quando couber, consentimento específico de pelo menos um dos pais ou responsável legal — art. 14 da LGPD).
+O controlador deve orientar líderes/administradores a **não cadastrar menores** sem o cumprimento das regras legais aplicáveis (incluindo, quando couber, consentimento específico de pelo menos um dos pais ou responsável legal — art. 14 da LGPD).
 
 Idade mínima recomendada de uso da plataforma pelos operadores (líderes/admins): **18 anos**, salvo definição diversa do controlador.
 
@@ -385,34 +376,49 @@ Idade mínima recomendada de uso da plataforma pelos operadores (líderes/admins
 
 Se a hospedagem, backups ou prestadores estiverem fora do Brasil, haverá transferência internacional de dados, a ser informada e amparada nas hipóteses do art. 33 da LGPD.
 
-A consulta de CEP ao ViaCEP pode envolver processamento conforme a infraestrutura desse prestador.
+`[INFORMAR: se há ou não transferência internacional da hospedagem/banco e para quais países/serviços]`
 
-\[INFORMAR: se há ou não transferência internacional da hospedagem/banco e para quais países/serviços\]
+**No cliente mobile:** a consulta ao **ViaCEP** (`viacep.com.br`) envia apenas o CEP. Trata-se de serviço externo utilizado para autocompletar endereço; não envia demais dados pessoais do apoiador ou do usuário.
 
 ---
 
 ## 14. Relatórios e exportações
 
-Administradores podem exportar relatórios contendo dados de apoiadores (incluindo identificação, contato, endereço e intenção de voto). Esses arquivos saem do ambiente controlado da API e devem ser tratados com confidencialidade, acesso restrito e descarte seguro quando não forem mais necessários.
+Administradores podem exportar relatórios (PDF/XLSX) contendo, entre outros: nome, CPF, data de nascimento, telefones, endereço completo, local de votação, intenção de voto, líder, observações e data de cadastro.
 
-No app, a exportação pode gerar arquivo no aparelho e acionar o **compartilhamento nativo** do sistema operacional. Quem compartilha o arquivo é responsável pelo destino escolhido (outros apps, nuvens pessoais etc.).
+Esses arquivos saem do ambiente controlado da API e devem ser tratados com confidencialidade, acesso restrito e descarte seguro quando não forem mais necessários.
+
+**No aplicativo mobile:** o relatório é baixado para o armazenamento do app e aberto no **compartilhamento nativo do SO**. O administrador escolhe o destino (WhatsApp, e-mail, nuvem etc.). Cópias podem permanecer no aparelho até limpeza/desinstalação; o uso posterior fora do app é de responsabilidade de quem exportou/compartilhou.
 
 ---
 
-## 15. Papéis e acesso no aplicativo
+## 15. Papéis e acesso
 
-| Perfil | Acesso típico no app |
-|--------|----------------------|
-| **Administrador** | Cadastrados (visão geral), feed (incluindo criação de publicações), perfil, gestão de líderes e relatórios/exportações |
-| **Líder** | Seus cadastrados, feed (consumo), perfil próprio; ao cadastrar apoiador, o vínculo é com o líder logado |
+| Perfil | Acesso típico via API |
+|--------|------------------------|
+| **Administrador** | Gestão de usuários, visão ampla de apoiadores, publicações, relatórios/exportações |
+| **Líder** | Gestão dos apoiadores sob seu vínculo, consumo/participação conforme regras de publicações e perfil |
 
-O escopo exato das listagens (todos vs. apenas os do líder) é aplicado pela API conforme o token e o perfil do usuário autenticado.
+O escopo exato das listagens é aplicado pela API conforme o token e o perfil do usuário autenticado.
+
+**Espelho na UI do app mobile:**
+
+| Perfil | Telas / ações típicas no app |
+|--------|------------------------------|
+| **Administrador** | Cadastrados (visão ampla), Feed (com criação de publicações), Perfil, Líderes (gestão) e Relatórios (exportação/compartilhamento) |
+| **Líder** | Cadastrados (apoiadores sob seu vínculo / “Seus cadastrados”) e Feed (consumo; gestão de publicação apenas quando for o autor, se aplicável). Perfil acessível a partir do fluxo do líder |
 
 ---
 
 ## 16. Alterações desta política
 
 Esta política pode ser atualizada para refletir mudanças na plataforma, na legislação ou nas práticas do controlador. A data de “última atualização” será revisada a cada alteração relevante. Quando a mudança for substancial, o controlador poderá comunicar pelos canais habituais da plataforma.
+
+**Exibição no app mobile:**
+
+- **Login:** checkbox obrigatório “Li e Aceito a Política de Privacidade”, com link que abre a URL pública da política;
+- **Perfil:** botão “Política de privacidade” que abre a mesma URL;
+- **URL publicada:** `https://convertix.net.br/pages/politica-privacidade-ramos-somar.html` (abertura preferencial em navegador in-app).
 
 ---
 
@@ -423,7 +429,7 @@ Esta política pode ser atualizada para refletir mudanças na plataforma, na leg
 | Privacidade / LGPD (controlador) | Victor Muller da Luz — victormuller050@gmail.com |
 | Suporte técnico / desenvolvimento | Convertix — contato@convertix.net |
 
-O aplicativo atual **não exibe** tela própria de política de privacidade nem canal de contato embutido; o canal oficial permanece o e-mail acima.
+No app mobile **não há** tela própria de contato nem telefone/WhatsApp institucional exibido. O login exibe a marca “Powered by Convertix”. Contato de privacidade permanece pelo e-mail acima.
 
 ---
 
@@ -435,7 +441,7 @@ Esta política é regida pela legislação brasileira, em especial a Lei nº 13.
 
 ## Anexo A — Mapa resumido de dados × finalidade (para o front)
 
-Use esta tabela no app/site se quiser uma versão mais curta:
+Versão curta para tela de privacidade / FAQ:
 
 | Categoria | Exemplos | Finalidade |
 |-----------|----------|------------|
@@ -443,31 +449,32 @@ Use esta tabela no app/site se quiser uma versão mais curta:
 | Contato | Telefone, WhatsApp | Comunicação de campanha |
 | Localização | Endereço, cidade, local de votação | Articulação territorial |
 | Perfil político | Intenção de voto, observações | Gestão de campanha |
-| Credenciais | Senha (hash), tokens | Segurança e acesso |
+| Credenciais | Senha (hash), tokens JWT/refresh | Segurança e acesso |
 | Mídia | Fotos de perfil e publicações | Identificação e conteúdo interno |
-| Técnicos | IP (rate limit), device/app headers, device_id local | Segurança e operação |
-| Cache local | Listagens temporárias no aparelho | Desempenho do app |
-| Terceiros de apoio | CEP enviado ao ViaCEP | Autopreenchimento de endereço |
+| Técnicos | IP (rate limit), headers de app/dispositivo | Segurança e operação |
+| Referência pública | Cidades IBGE, locais TSE | Apoio ao cadastro eleitoral |
 
 ---
 
-## Anexo B — Ainda pendente (controlador)
+## Anexo B — Checklist do front (preenchido)
 
-Itens que ainda dependem de definição operacional do controlador (não inferíveis só pelo código):
+Status com base no app Flutter `app_ramos_candidatura` (25/07/2026):
+
+1. Identificadores do app (Android/iOS), URL da API e client id — **preenchido** (§1.1);
+2. Existência e URL do painel web — **preenchido** (não há painel web; só app mobile);
+3. Armazenamento local de token/sessão/cache/device_id — **preenchido** (§3.4, §8.2, §9.1);
+4. Permissões do aparelho e uso real (câmera, galeria, GPS etc.) — **preenchido** (§6, §8.2);
+5. SDKs de terceiros no cliente (ou ausência) — **preenchido** (§3.8, §8.2);
+6. Cookies/analytics no painel web — **N/A** (sem painel web);
+7. Integração ViaCEP no formulário de endereço — **preenchido** (§4, §6, §7.3);
+8. Compartilhamento de relatórios pelo SO — **preenchido** (§7.2, §14);
+9. Comportamento no logout e na desinstalação — **preenchido** (§10);
+10. Onde a política é exibida no app — **preenchido** (§16).
+
+### Pendências do controlador (não do código)
 
 - Telefone ou WhatsApp de contato institucional (além do e-mail);
-- País/região onde o servidor/banco está hospedado;
-- Se há transferência internacional de dados da hospedagem/backups e para quais países/serviços;
+- País/região da hospedagem do servidor/banco;
+- Se há transferência internacional e para quais países/serviços;
 - Prazo de retenção após o fim da campanha/uso;
-- Bases legais definitivas escolhidas para cadastro de apoiadores e intenção de voto (e como o consentimento será obtido/registrado, se for o caso);
-- Eventual painel web: cookies/analytics, se forem adotados.
-
-### Já coberto com base no app (revisão do front)
-
-- Permissões do celular (câmera, galeria, armazenamento/internet; sem GPS);
-- Ausência de SDKs de analytics/Firebase no app atual;
-- Armazenamento local (token seguro, sessão, cache, device id);
-- Headers técnicos enviados à API;
-- Integração ViaCEP no cadastro de endereço;
-- Compartilhamento de relatórios pelo administrador via SO do aparelho;
-- Identificadores do app (`com.net.convertix.ramossomar`) e API de produção Convertix.
+- Bases legais definitivas para cadastro de apoiadores e intenção de voto (e como o consentimento será obtido/registrado, se for o caso).

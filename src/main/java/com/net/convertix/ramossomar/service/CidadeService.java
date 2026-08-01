@@ -31,6 +31,14 @@ public class CidadeService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<CidadeResponse> listarTodos() {
+		segurancaUtil.obterUsuarioAutenticado();
+		return cidadeRepository.listarTodos().stream()
+				.map(MapperUtil::paraCidadeResponse)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
 	public CidadeResponse buscarPorId(UUID id) {
 		segurancaUtil.obterUsuarioAutenticado();
 		return MapperUtil.paraCidadeResponse(obterPorId(id));

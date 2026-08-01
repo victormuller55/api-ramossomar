@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
@@ -19,6 +20,36 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DataInitializer {
 
 	private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
+
+	/**
+	 * Hibernate ddl-auto=update nem sempre remove NOT NULL legado.
+	 * Garante que CPF possa ser nulo conforme a regra de negócio atual.
+	 */
+	@Bean
+	@Order(0)
+	CommandLineRunner tornarCpfApoiadorOpcional(JdbcTemplate jdbcTemplate) {
+		return args -> {
+			try {
+				String isNullable = jdbcTemplate.query(
+						"""
+						SELECT IS_NULLABLE
+						FROM INFORMATION_SCHEMA.COLUMNS
+						WHERE TABLE_SCHEMA = DATABASE()
+						  AND TABLE_NAME = 'tbl_apoiadores'
+						  AND COLUMN_NAME = 'cpf'
+						""",
+						rs -> rs.next() ? rs.getString(1) : null
+				);
+
+				if ("NO".equalsIgnoreCase(isNullable)) {
+					jdbcTemplate.execute("ALTER TABLE tbl_apoiadores MODIFY COLUMN cpf VARCHAR(14) NULL");
+					log.info("Coluna tbl_apoiadores.cpf ajustada para aceitar NULL");
+				}
+			} catch (Exception ex) {
+				log.warn("Não foi possível ajustar a coluna cpf para opcional: {}", ex.getMessage());
+			}
+		};
+	}
 
 	@Bean
 	@Order(1)

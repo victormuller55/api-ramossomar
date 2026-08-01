@@ -72,6 +72,14 @@ public class LocalVotacaoService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<LocalVotacaoResponse> listarTodos() {
+		segurancaUtil.obterUsuarioAutenticado();
+		return localVotacaoRepository.listarTodos().stream()
+				.map(MapperUtil::paraLocalVotacaoResponse)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
 	public LocalVotacaoResponse buscarPorId(UUID id) {
 		segurancaUtil.obterUsuarioAutenticado();
 		return MapperUtil.paraLocalVotacaoResponse(obterPorId(id));

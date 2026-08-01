@@ -78,6 +78,20 @@ public class LocalVotacaoController {
 		return ResponseEntity.ok(localVotacaoService.listar(nome, idCidade, codigoIbge, zonaEleitoral, ativo));
 	}
 
+	@GetMapping("/todos")
+	@Operation(
+			summary = "Listar todos os locais de votação",
+			description = "Retorna todos os locais de votação de uma vez, sem paginação nem filtros. Pode demorar conforme o volume de dados."
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Lista completa retornada"),
+			@ApiResponse(responseCode = "500", description = "Erro interno",
+					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+	})
+	public ResponseEntity<List<LocalVotacaoResponse>> listarTodos() {
+		return ResponseEntity.ok(localVotacaoService.listarTodos());
+	}
+
 	@GetMapping("/por-id")
 	@Operation(summary = "Buscar local por ID", description = "Retorna um local de votação pelo identificador UUID.")
 	@ApiResponses({
@@ -113,13 +127,11 @@ public class LocalVotacaoController {
 	@DeleteMapping("/apagar")
 	@Operation(summary = "Apagar local de votação", description = "Inativa o local de votação (desativação lógica via campo ativo).")
 	@ApiResponses({
+
 			@ApiResponse(responseCode = "204", description = "Local inativado"),
-			@ApiResponse(responseCode = "400", description = "Requisição inválida",
-					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
-			@ApiResponse(responseCode = "404", description = "Local não encontrado",
-					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
-			@ApiResponse(responseCode = "500", description = "Erro interno",
-					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+			@ApiResponse(responseCode = "400", description = "Requisição inválida", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+			@ApiResponse(responseCode = "404", description = "Local não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Erro interno", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
 	})
 	public ResponseEntity<Void> apagar(@RequestParam UUID id) {
 		localVotacaoService.apagar(id);

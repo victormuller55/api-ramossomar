@@ -35,6 +35,13 @@ public interface LocalVotacaoRepository extends JpaRepository<LocalVotacao, UUID
 	@Query("""
 			SELECT l FROM LocalVotacao l
 			JOIN FETCH l.cidade
+			ORDER BY l.nome
+			""")
+	List<LocalVotacao> listarTodos();
+
+	@Query("""
+			SELECT l FROM LocalVotacao l
+			JOIN FETCH l.cidade
 			WHERE l.id = :id
 			""")
 	Optional<LocalVotacao> buscarPorId(@Param("id") UUID id);

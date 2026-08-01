@@ -50,7 +50,7 @@ public class Apoiador {
 	@Column(name = "nome", nullable = false, length = 150)
 	private String nome;
 
-	@Column(name = "cpf", length = 14)
+	@Column(name = "cpf", nullable = true, length = 14)
 	private String cpf;
 
 	@Column(name = "data_nascimento")

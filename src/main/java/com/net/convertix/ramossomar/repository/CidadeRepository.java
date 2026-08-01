@@ -22,5 +22,8 @@ public interface CidadeRepository extends JpaRepository<Cidade, UUID> {
 			""")
 	List<Cidade> filtrar(@Param("nome") String nome, @Param("uf") String uf);
 
+	@Query("SELECT c FROM Cidade c ORDER BY c.nome")
+	List<Cidade> listarTodos();
+
 	List<Cidade> findByUfOrderByNomeAsc(String uf);
 }
