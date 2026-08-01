@@ -4,6 +4,7 @@ import com.net.convertix.ramossomar.dto.request.ApoiadorRequest;
 import com.net.convertix.ramossomar.dto.request.ApoiadorUpdateRequest;
 import com.net.convertix.ramossomar.dto.response.ApoiadorResponse;
 import com.net.convertix.ramossomar.dto.response.ErroResponse;
+import com.net.convertix.ramossomar.dto.response.PaginacaoResponse;
 import com.net.convertix.ramossomar.model.enums.IntencaoVoto;
 import com.net.convertix.ramossomar.service.ApoiadorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,9 +56,13 @@ public class ApoiadorController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Listar apoiadores", description = "Lista apoiadores com filtros via query params (nome, cidade, id_lider, intencao_voto, cpf).")
+	@Operation(
+			summary = "Listar apoiadores",
+			description = "Lista apoiadores com paginação (20 itens por página) e filtros via query params (nome, cidade, id_lider, intencao_voto, cpf, pagina)."
+	)
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lista retornada"),
+			@ApiResponse(responseCode = "200", description = "Lista paginada retornada",
+					content = @Content(schema = @Schema(implementation = PaginacaoResponse.class))),
 			@ApiResponse(responseCode = "400", description = "Parâmetros inválidos",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
 			@ApiResponse(responseCode = "404", description = "Recurso não encontrado",
@@ -66,14 +70,15 @@ public class ApoiadorController {
 			@ApiResponse(responseCode = "500", description = "Erro interno",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
 	})
-	public ResponseEntity<List<ApoiadorResponse>> listar(
+	public ResponseEntity<PaginacaoResponse<ApoiadorResponse>> listar(
 			@RequestParam(required = false) String nome,
 			@RequestParam(required = false) String cidade,
 			@RequestParam(required = false, name = "id_lider") UUID idLider,
 			@RequestParam(required = false, name = "intencao_voto") IntencaoVoto intencaoVoto,
-			@RequestParam(required = false) String cpf
+			@RequestParam(required = false) String cpf,
+			@RequestParam(required = false, defaultValue = "1") Integer pagina
 	) {
-		return ResponseEntity.ok(apoiadorService.listar(nome, cidade, idLider, intencaoVoto, cpf));
+		return ResponseEntity.ok(apoiadorService.listar(nome, cidade, idLider, intencaoVoto, cpf, pagina));
 	}
 
 	@PutMapping("/alterar-dados")

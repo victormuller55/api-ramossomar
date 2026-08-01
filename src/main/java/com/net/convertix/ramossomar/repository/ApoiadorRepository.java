@@ -2,9 +2,10 @@ package com.net.convertix.ramossomar.repository;
 
 import com.net.convertix.ramossomar.model.Apoiador;
 import com.net.convertix.ramossomar.model.enums.IntencaoVoto;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,13 +27,15 @@ public interface ApoiadorRepository extends JpaRepository<Apoiador, UUID> {
 			AND (:idLider IS NULL OR a.lider.id = :idLider)
 			AND (:intencaoVoto IS NULL OR a.intencaoVoto = :intencaoVoto)
 			AND (:cpf IS NULL OR a.cpf = :cpf)
+			ORDER BY a.nome ASC
 			""")
-	List<Apoiador> filtrar(
+	Page<Apoiador> filtrar(
 			@Param("nome") String nome,
 			@Param("cidade") String cidade,
 			@Param("idLider") UUID idLider,
 			@Param("intencaoVoto") IntencaoVoto intencaoVoto,
-			@Param("cpf") String cpf
+			@Param("cpf") String cpf,
+			Pageable pageable
 	);
 
 	boolean existsByCpfAndDataExclusaoIsNull(String cpf);

@@ -3,6 +3,7 @@ package com.net.convertix.ramossomar.service;
 import com.net.convertix.ramossomar.dto.request.ApoiadorRequest;
 import com.net.convertix.ramossomar.dto.request.ApoiadorUpdateRequest;
 import com.net.convertix.ramossomar.dto.response.ApoiadorResponse;
+import com.net.convertix.ramossomar.dto.response.PaginacaoResponse;
 import com.net.convertix.ramossomar.exception.AcessoNegadoException;
 import com.net.convertix.ramossomar.exception.NegocioException;
 import com.net.convertix.ramossomar.exception.RecursoNaoEncontradoException;
@@ -17,10 +18,13 @@ import com.net.convertix.ramossomar.repository.UsuarioRepository;
 import com.net.convertix.ramossomar.security.SegurancaUtil;
 import com.net.convertix.ramossomar.security.UsuarioAutenticado;
 import com.net.convertix.ramossomar.util.MapperUtil;
+import com.net.convertix.ramossomar.util.PaginacaoUtil;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,12 +79,42 @@ public class ApoiadorService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<ApoiadorResponse> listar(
+	public PaginacaoResponse<ApoiadorResponse> listar(
+			String nome,
+			String cidade,
+			UUID idLider,
+			IntencaoVoto intencaoVoto,
+			String cpf,
+			Integer pagina
+	) {
+		Pageable pageable = PaginacaoUtil.criar(pagina);
+		Page<Apoiador> page = filtrar(nome, cidade, idLider, intencaoVoto, cpf, pageable);
+		List<ApoiadorResponse> itens = page.getContent().stream()
+				.map(MapperUtil::paraApoiadorResponse)
+				.toList();
+		return PaginacaoResponse.de(itens, page);
+	}
+
+	@Transactional(readOnly = true)
+	public List<ApoiadorResponse> listarTodos(
 			String nome,
 			String cidade,
 			UUID idLider,
 			IntencaoVoto intencaoVoto,
 			String cpf
+	) {
+		return filtrar(nome, cidade, idLider, intencaoVoto, cpf, Pageable.unpaged()).stream()
+				.map(MapperUtil::paraApoiadorResponse)
+				.toList();
+	}
+
+	private Page<Apoiador> filtrar(
+			String nome,
+			String cidade,
+			UUID idLider,
+			IntencaoVoto intencaoVoto,
+			String cpf,
+			Pageable pageable
 	) {
 		UsuarioAutenticado autenticado = segurancaUtil.obterUsuarioAutenticado();
 		UUID filtroLider = idLider;
@@ -89,9 +123,7 @@ public class ApoiadorService {
 			filtroLider = autenticado.getId();
 		}
 
-		return apoiadorRepository.filtrar(nome, cidade, filtroLider, intencaoVoto, cpf).stream()
-				.map(MapperUtil::paraApoiadorResponse)
-				.toList();
+		return apoiadorRepository.filtrar(nome, cidade, filtroLider, intencaoVoto, cpf, pageable);
 	}
 
 	@Transactional

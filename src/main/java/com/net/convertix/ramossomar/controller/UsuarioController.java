@@ -3,6 +3,7 @@ package com.net.convertix.ramossomar.controller;
 import com.net.convertix.ramossomar.dto.request.UsuarioRequest;
 import com.net.convertix.ramossomar.dto.request.UsuarioUpdateRequest;
 import com.net.convertix.ramossomar.dto.response.ErroResponse;
+import com.net.convertix.ramossomar.dto.response.PaginacaoResponse;
 import com.net.convertix.ramossomar.dto.response.UsuarioResponse;
 import com.net.convertix.ramossomar.model.enums.Perfil;
 import com.net.convertix.ramossomar.service.UsuarioService;
@@ -61,9 +62,13 @@ public class UsuarioController {
 
 	@GetMapping
 	@PreAuthorize("hasRole('ADMIN')")
-	@Operation(summary = "Listar usuários", description = "Lista usuários com filtros opcionais via query params.")
+	@Operation(
+			summary = "Listar usuários",
+			description = "Lista usuários com paginação (20 itens por página) e filtros opcionais via query params (nome, email, perfil, ativo, pagina)."
+	)
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lista retornada"),
+			@ApiResponse(responseCode = "200", description = "Lista paginada retornada",
+					content = @Content(schema = @Schema(implementation = PaginacaoResponse.class))),
 			@ApiResponse(responseCode = "400", description = "Parâmetros inválidos",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
 			@ApiResponse(responseCode = "404", description = "Recurso não encontrado",
@@ -71,13 +76,14 @@ public class UsuarioController {
 			@ApiResponse(responseCode = "500", description = "Erro interno",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
 	})
-	public ResponseEntity<List<UsuarioResponse>> listar(
+	public ResponseEntity<PaginacaoResponse<UsuarioResponse>> listar(
 			@RequestParam(required = false) String nome,
 			@RequestParam(required = false) String email,
 			@RequestParam(required = false) Perfil perfil,
-			@RequestParam(required = false) Boolean ativo
+			@RequestParam(required = false) Boolean ativo,
+			@RequestParam(required = false, defaultValue = "1") Integer pagina
 	) {
-		return ResponseEntity.ok(usuarioService.listar(nome, email, perfil, ativo));
+		return ResponseEntity.ok(usuarioService.listar(nome, email, perfil, ativo, pagina));
 	}
 
 	@PutMapping("/alterar-dados")

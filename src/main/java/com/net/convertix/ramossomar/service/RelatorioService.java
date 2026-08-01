@@ -56,7 +56,7 @@ public class RelatorioService {
 	) {
 		segurancaUtil.exigirAdmin();
 
-		List<ApoiadorResponse> apoiadores = apoiadorService.listar(nome, cidade, idLider, intencaoVoto, cpf);
+		List<ApoiadorResponse> apoiadores = apoiadorService.listarTodos(nome, cidade, idLider, intencaoVoto, cpf);
 
 		if ("pdf".equalsIgnoreCase(formato)) {
 			return gerarPdf(apoiadores);

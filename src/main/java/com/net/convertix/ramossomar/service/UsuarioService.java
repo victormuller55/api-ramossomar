@@ -2,6 +2,7 @@ package com.net.convertix.ramossomar.service;
 
 import com.net.convertix.ramossomar.dto.request.UsuarioRequest;
 import com.net.convertix.ramossomar.dto.request.UsuarioUpdateRequest;
+import com.net.convertix.ramossomar.dto.response.PaginacaoResponse;
 import com.net.convertix.ramossomar.dto.response.UsuarioResponse;
 import com.net.convertix.ramossomar.exception.NegocioException;
 import com.net.convertix.ramossomar.exception.RecursoNaoEncontradoException;
@@ -10,8 +11,10 @@ import com.net.convertix.ramossomar.model.enums.Perfil;
 import com.net.convertix.ramossomar.repository.UsuarioRepository;
 import com.net.convertix.ramossomar.security.SegurancaUtil;
 import com.net.convertix.ramossomar.util.MapperUtil;
+import com.net.convertix.ramossomar.util.PaginacaoUtil;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,11 +62,19 @@ public class UsuarioService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<UsuarioResponse> listar(String nome, String email, Perfil perfil, Boolean ativo) {
+	public PaginacaoResponse<UsuarioResponse> listar(
+			String nome,
+			String email,
+			Perfil perfil,
+			Boolean ativo,
+			Integer pagina
+	) {
 		segurancaUtil.exigirAdmin();
-		return usuarioRepository.filtrar(nome, email, perfil, ativo).stream()
+		Page<Usuario> page = usuarioRepository.filtrar(nome, email, perfil, ativo, PaginacaoUtil.criar(pagina));
+		List<UsuarioResponse> itens = page.getContent().stream()
 				.map(MapperUtil::paraUsuarioResponse)
 				.toList();
+		return PaginacaoResponse.de(itens, page);
 	}
 
 	@Transactional

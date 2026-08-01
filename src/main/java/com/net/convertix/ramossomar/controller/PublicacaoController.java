@@ -3,6 +3,7 @@ package com.net.convertix.ramossomar.controller;
 import com.net.convertix.ramossomar.dto.request.PublicacaoRequest;
 import com.net.convertix.ramossomar.dto.request.PublicacaoUpdateRequest;
 import com.net.convertix.ramossomar.dto.response.ErroResponse;
+import com.net.convertix.ramossomar.dto.response.PaginacaoResponse;
 import com.net.convertix.ramossomar.dto.response.PublicacaoResponse;
 import com.net.convertix.ramossomar.service.PublicacaoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,9 +58,13 @@ public class PublicacaoController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Listar publicações", description = "Lista publicações com filtros via query params.")
+	@Operation(
+			summary = "Listar publicações",
+			description = "Lista publicações com paginação (20 itens por página) e filtros via query params (titulo, id_autor, pagina)."
+	)
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lista retornada"),
+			@ApiResponse(responseCode = "200", description = "Lista paginada retornada",
+					content = @Content(schema = @Schema(implementation = PaginacaoResponse.class))),
 			@ApiResponse(responseCode = "400", description = "Parâmetros inválidos",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class))),
 			@ApiResponse(responseCode = "404", description = "Recurso não encontrado",
@@ -67,11 +72,12 @@ public class PublicacaoController {
 			@ApiResponse(responseCode = "500", description = "Erro interno",
 					content = @Content(schema = @Schema(implementation = ErroResponse.class)))
 	})
-	public ResponseEntity<List<PublicacaoResponse>> listar(
+	public ResponseEntity<PaginacaoResponse<PublicacaoResponse>> listar(
 			@RequestParam(required = false) String titulo,
-			@RequestParam(required = false, name = "id_autor") UUID idAutor
+			@RequestParam(required = false, name = "id_autor") UUID idAutor,
+			@RequestParam(required = false, defaultValue = "1") Integer pagina
 	) {
-		return ResponseEntity.ok(publicacaoService.listar(titulo, idAutor));
+		return ResponseEntity.ok(publicacaoService.listar(titulo, idAutor, pagina));
 	}
 
 	@PutMapping("/alterar-dados")

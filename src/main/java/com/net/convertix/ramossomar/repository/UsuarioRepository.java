@@ -2,9 +2,10 @@ package com.net.convertix.ramossomar.repository;
 
 import com.net.convertix.ramossomar.model.Usuario;
 import com.net.convertix.ramossomar.model.enums.Perfil;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,11 +24,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
 			AND (:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%')))
 			AND (:perfil IS NULL OR u.perfil = :perfil)
 			AND (:ativo IS NULL OR u.ativo = :ativo)
+			ORDER BY u.nome ASC
 			""")
-	List<Usuario> filtrar(
+	Page<Usuario> filtrar(
 			@Param("nome") String nome,
 			@Param("email") String email,
 			@Param("perfil") Perfil perfil,
-			@Param("ativo") Boolean ativo
+			@Param("ativo") Boolean ativo,
+			Pageable pageable
 	);
 }

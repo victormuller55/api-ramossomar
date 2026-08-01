@@ -1,8 +1,9 @@
 package com.net.convertix.ramossomar.repository;
 
 import com.net.convertix.ramossomar.model.Publicacao;
-import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,8 +16,9 @@ public interface PublicacaoRepository extends JpaRepository<Publicacao, UUID> {
 			AND (:idAutor IS NULL OR p.autor.id = :idAutor)
 			ORDER BY p.dataCriacao DESC
 			""")
-	List<Publicacao> filtrar(
+	Page<Publicacao> filtrar(
 			@Param("titulo") String titulo,
-			@Param("idAutor") UUID idAutor
+			@Param("idAutor") UUID idAutor,
+			Pageable pageable
 	);
 }

@@ -2,6 +2,7 @@ package com.net.convertix.ramossomar.service;
 
 import com.net.convertix.ramossomar.dto.request.PublicacaoRequest;
 import com.net.convertix.ramossomar.dto.request.PublicacaoUpdateRequest;
+import com.net.convertix.ramossomar.dto.response.PaginacaoResponse;
 import com.net.convertix.ramossomar.dto.response.PublicacaoResponse;
 import com.net.convertix.ramossomar.exception.AcessoNegadoException;
 import com.net.convertix.ramossomar.exception.NegocioException;
@@ -13,9 +14,11 @@ import com.net.convertix.ramossomar.repository.UsuarioRepository;
 import com.net.convertix.ramossomar.security.SegurancaUtil;
 import com.net.convertix.ramossomar.security.UsuarioAutenticado;
 import com.net.convertix.ramossomar.util.MapperUtil;
+import com.net.convertix.ramossomar.util.PaginacaoUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,11 +62,13 @@ public class PublicacaoService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<PublicacaoResponse> listar(String titulo, UUID idAutor) {
+	public PaginacaoResponse<PublicacaoResponse> listar(String titulo, UUID idAutor, Integer pagina) {
 		segurancaUtil.obterUsuarioAutenticado();
-		return publicacaoRepository.filtrar(titulo, idAutor).stream()
+		Page<Publicacao> page = publicacaoRepository.filtrar(titulo, idAutor, PaginacaoUtil.criar(pagina));
+		List<PublicacaoResponse> itens = page.getContent().stream()
 				.map(MapperUtil::paraPublicacaoResponse)
 				.toList();
+		return PaginacaoResponse.de(itens, page);
 	}
 
 	@Transactional
