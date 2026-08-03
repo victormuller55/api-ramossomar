@@ -2,6 +2,8 @@ package com.net.convertix.ramossomar.repository;
 
 import com.net.convertix.ramossomar.model.Apoiador;
 import com.net.convertix.ramossomar.model.enums.IntencaoVoto;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -41,4 +43,19 @@ public interface ApoiadorRepository extends JpaRepository<Apoiador, UUID> {
 	boolean existsByCpfAndDataExclusaoIsNull(String cpf);
 
 	boolean existsByCpfAndDataExclusaoIsNullAndIdNot(String cpf, UUID id);
+
+	@Query("""
+			SELECT COUNT(a) FROM Apoiador a
+			WHERE a.dataExclusao IS NULL
+			AND a.lider.id = :idLider
+			""")
+	long contarPorLider(@Param("idLider") UUID idLider);
+
+	@Query("""
+			SELECT a.lider.id, COUNT(a) FROM Apoiador a
+			WHERE a.dataExclusao IS NULL
+			AND a.lider.id IN :idsLider
+			GROUP BY a.lider.id
+			""")
+	List<Object[]> contarPorLideres(@Param("idsLider") Collection<UUID> idsLider);
 }

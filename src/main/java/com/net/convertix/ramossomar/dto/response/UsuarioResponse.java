@@ -29,6 +29,9 @@ public class UsuarioResponse {
 	@Schema(description = "Indica se está ativo")
 	private Boolean ativo;
 
+	@Schema(description = "Quantidade de apoiadores cadastrados por este líder", example = "12")
+	private Long total_apoiadores;
+
 	@Schema(description = "Data do último login")
 	private LocalDateTime data_ultimo_login;
 
@@ -92,6 +95,14 @@ public class UsuarioResponse {
 
 	public void setAtivo(Boolean ativo) {
 		this.ativo = ativo;
+	}
+
+	public Long getTotal_apoiadores() {
+		return total_apoiadores;
+	}
+
+	public void setTotal_apoiadores(Long total_apoiadores) {
+		this.total_apoiadores = total_apoiadores;
 	}
 
 	public LocalDateTime getData_ultimo_login() {

@@ -8,11 +8,14 @@ import com.net.convertix.ramossomar.exception.NegocioException;
 import com.net.convertix.ramossomar.exception.RecursoNaoEncontradoException;
 import com.net.convertix.ramossomar.model.Usuario;
 import com.net.convertix.ramossomar.model.enums.Perfil;
+import com.net.convertix.ramossomar.repository.ApoiadorRepository;
 import com.net.convertix.ramossomar.repository.UsuarioRepository;
 import com.net.convertix.ramossomar.security.SegurancaUtil;
 import com.net.convertix.ramossomar.util.MapperUtil;
 import com.net.convertix.ramossomar.util.PaginacaoUtil;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,17 +29,20 @@ public class UsuarioService {
 	private static final String PASTA_USUARIOS = "usuarios";
 
 	private final UsuarioRepository usuarioRepository;
+	private final ApoiadorRepository apoiadorRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final SegurancaUtil segurancaUtil;
 	private final ArquivoStorageService arquivoStorageService;
 
 	public UsuarioService(
 			UsuarioRepository usuarioRepository,
+			ApoiadorRepository apoiadorRepository,
 			PasswordEncoder passwordEncoder,
 			SegurancaUtil segurancaUtil,
 			ArquivoStorageService arquivoStorageService
 	) {
 		this.usuarioRepository = usuarioRepository;
+		this.apoiadorRepository = apoiadorRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.segurancaUtil = segurancaUtil;
 		this.arquivoStorageService = arquivoStorageService;
@@ -58,7 +64,9 @@ public class UsuarioService {
 		usuario.setTelefone(request.getTelefone());
 		usuario.setAtivo(request.getAtivo() == null || request.getAtivo());
 
-		return MapperUtil.paraUsuarioResponse(usuarioRepository.save(usuario));
+		UsuarioResponse response = MapperUtil.paraUsuarioResponse(usuarioRepository.save(usuario));
+		response.setTotal_apoiadores(0L);
+		return response;
 	}
 
 	@Transactional(readOnly = true)
@@ -74,6 +82,7 @@ public class UsuarioService {
 		List<UsuarioResponse> itens = page.getContent().stream()
 				.map(MapperUtil::paraUsuarioResponse)
 				.toList();
+		preencherTotalApoiadores(itens);
 		return PaginacaoResponse.de(itens, page);
 	}
 
@@ -101,7 +110,9 @@ public class UsuarioService {
 			usuario.setSenha(passwordEncoder.encode(request.getSenha()));
 		}
 
-		return MapperUtil.paraUsuarioResponse(usuarioRepository.save(usuario));
+		UsuarioResponse response = MapperUtil.paraUsuarioResponse(usuarioRepository.save(usuario));
+		response.setTotal_apoiadores(apoiadorRepository.contarPorLider(usuario.getId()));
+		return response;
 	}
 
 	@Transactional
@@ -118,7 +129,9 @@ public class UsuarioService {
 			arquivoStorageService.excluirSeExistir(imagemAnterior);
 		}
 
-		return MapperUtil.paraUsuarioResponse(salvo);
+		UsuarioResponse response = MapperUtil.paraUsuarioResponse(salvo);
+		response.setTotal_apoiadores(apoiadorRepository.contarPorLider(salvo.getId()));
+		return response;
 	}
 
 	@Transactional
@@ -132,5 +145,21 @@ public class UsuarioService {
 	public Usuario buscarPorId(UUID id) {
 		return usuarioRepository.findById(id)
 				.orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
+	}
+
+	private void preencherTotalApoiadores(List<UsuarioResponse> itens) {
+		if (itens.isEmpty()) {
+			return;
+		}
+
+		List<UUID> ids = itens.stream().map(UsuarioResponse::getId).toList();
+		Map<UUID, Long> totais = new HashMap<>();
+		for (Object[] row : apoiadorRepository.contarPorLideres(ids)) {
+			totais.put((UUID) row[0], (Long) row[1]);
+		}
+
+		for (UsuarioResponse item : itens) {
+			item.setTotal_apoiadores(totais.getOrDefault(item.getId(), 0L));
+		}
 	}
 }
